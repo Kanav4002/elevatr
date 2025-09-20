@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const ProjectsBrowse = () => {
@@ -295,9 +296,12 @@ const ProjectsBrowse = () => {
               {/* Project Header */}
               <div className="p-6">
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-gray-800 flex-1 mr-2">
-                    {project.title || 'Untitled Project'}
-                  </h3>
+                <Link 
+                  to={`/projects/${project._id}`}
+                  className="text-lg font-semibold text-gray-800 flex-1 mr-2 hover:text-blue-600 transition duration-200"
+                >
+                  {project.title || 'Untitled Project'}
+                </Link>
                   {project.isPublic && (
                     <span className="px-2 py-1 text-xs bg-green-100 text-green-600 rounded-full flex-shrink-0">
                       Public
@@ -370,6 +374,12 @@ const ProjectsBrowse = () => {
                       Live Demo
                     </a>
                   )}
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
+                  <Link to={`/projects/${project._id}`} className="...">
+                    View Details →
+                  </Link>
                 </div>
               </div>
             </div>

@@ -8,6 +8,7 @@ import AddProject from './components/projects/AddProjects';
 import ProjectsList from './components/projects/ProjectsList';
 import EditProject from './components/projects/EditProject';
 import ProjectsBrowse from './components/projects/ProjectsBrowse';
+import ProjectDetail from './components/projects/ProjectDetail';
 import Layout from './components/Layout';
 import './App.css';
 import './index.css';
@@ -47,6 +48,12 @@ function App() {
           <Route path="projects/browse" element={
             <ProtectedRoute>
               <ProjectsBrowse/>
+            </ProtectedRoute>
+          }/>
+
+          <Route path="projects/:id" element={
+            <ProtectedRoute>
+              <ProjectDetail/>
             </ProtectedRoute>
           }/>
         </Route>

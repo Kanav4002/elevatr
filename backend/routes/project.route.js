@@ -1,7 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { verifyAuth } = require('../middlewares/auth.middleware');
-const { createProject, getMyProjects, getAllProjects, getProjectById, updateProject, deleteProject, getPublicProjects, searchProjects } = require('../controllers/project.controller');
+const { 
+  createProject, 
+  getMyProjects, 
+  getAllProjects, 
+  getProjectById, 
+  updateProject, 
+  deleteProject,
+  searchProjects 
+} = require('../controllers/project.controller');
 
 // routes require authentication
 router.use(verifyAuth);
@@ -25,7 +33,6 @@ router.put('/:id', updateProject);
 router.delete('/:id', deleteProject);
 
 // 
-router.get('/public', getPublicProjects);
 router.get('/search', searchProjects);
 
 module.exports = router;

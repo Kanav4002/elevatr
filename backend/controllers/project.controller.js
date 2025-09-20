@@ -26,32 +26,62 @@ const createProject = async (req, res) => {
 const getMyProjects = async (req, res) => {
   try {
     const projects = await Project.find({ owner: req.user.id })
-      .populate('owner', 'name email')
+      .populate('owner', 'name email role') // 🔧 Add role
       .sort({ createdAt: -1 });
 
+    // 🔧 Transform projects to use 'user' field for frontend consistency
+    const transformedProjects = projects.map(project => {
+      const projectObj = project.toObject();
+      return {
+        ...projectObj,
+        user: projectObj.owner, // Map owner to user
+        views: projectObj.views || 0
+      };
+    });
+
     res.json({ 
+      success: true, // 🔧 Add success field
       message: "Projects retrieved successfully", 
-      projects,
-      count: projects.length
+      projects: transformedProjects, // 🔧 Use transformed projects
+      count: transformedProjects.length
     });
   } catch (error) {
-    res.status(500).json({ message: "Failed to retrieve projects", error: error.message });
+    res.status(500).json({ 
+      success: false, // 🔧 Add success field
+      message: "Failed to retrieve projects", 
+      error: error.message 
+    });
   }
 };
 
 const getAllProjects = async (req, res) => {
   try {
     const projects = await Project.find({ isPublic: true })
-      .populate('owner', 'name email role')
+      .populate('owner', 'name email role') // 🔧 Keep as 'owner'
       .sort({ createdAt: -1 });
 
+    // 🔧 Transform projects to use 'user' field for frontend consistency
+    const transformedProjects = projects.map(project => {
+      const projectObj = project.toObject();
+      return {
+        ...projectObj,
+        user: projectObj.owner, // Map owner to user
+        views: projectObj.views || 0
+      };
+    });
+
     res.json({
+      success: true, // 🔧 Add success field
       message: "Public projects retrieved successfully",
-      projects,
-      count: projects.length
+      projects: transformedProjects, // 🔧 Use transformed projects
+      count: transformedProjects.length
     });  
   } catch (error) {
-    res.status(500).json({ message: "Failed to retrieve projects", error: error.message });
+    res.status(500).json({ 
+      success: false, // 🔧 Add success field
+      message: "Failed to retrieve projects", 
+      error: error.message 
+    });
   }
 };
 
@@ -62,6 +92,7 @@ const getProjectById = async (req, res) => {
 
     if (!project) {
       return res.status(404).json({
+        success: false,
         message: "Project not found"
       });
     }
@@ -69,18 +100,35 @@ const getProjectById = async (req, res) => {
     // Check if project is public OR user is the owner
     if (!project.isPublic && project.owner._id.toString() !== req.user.id) {
       return res.status(403).json({
+        success: false,
         message: "Access denied - Private project"
       });
     }
 
+    const updatedProject = await Project.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    ).populate('owner', 'name email role');
+
+    const projectResponse = {
+      ...project.toObject(),
+      user: project.owner,
+      views: project.views || 0
+    };
+
+    delete projectResponse.owner;
+
     res.json({
+      success: true,
       message: "Project retrieved successfully",
-      project
+      project: projectResponse
     });
 
   } catch (error) {
     console.error('Get project by ID error:', error);
     res.status(500).json({
+      success: false,
       message: "Failed to retrieve project",
       error: error.message
     });
@@ -166,31 +214,10 @@ const deleteProject = async (req, res) => {
   }
 };
 
-const getPublicProjects = async (req, res) => {
-  try {
-    const projects = await Project.find({ isPublic: true })
-      .populate('user', 'name email role')
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      projects,
-      count: projects.length
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
-};
-
 const searchProjects = async (req, res) => {
   try {
     const { search, tech, isPublic } = req.query;
     
-    // Build search query
     let query = {};
     
     // If user is recruiter, only show public projects
@@ -199,7 +226,7 @@ const searchProjects = async (req, res) => {
     } else {
       // If student, show their own projects + public ones
       query.$or = [
-        { user: req.user.id },
+        { owner: req.user.id }, // 🔧 FIX: Use 'owner' not 'user'
         { isPublic: true }
       ];
     }
@@ -218,13 +245,23 @@ const searchProjects = async (req, res) => {
     }
 
     const projects = await Project.find(query)
-      .populate('user', 'name email role')
+      .populate('owner', 'name email role') // 🔧 FIX: Use 'owner' not 'user'
       .sort({ createdAt: -1 });
+
+    // 🔧 Transform projects for frontend consistency
+    const transformedProjects = projects.map(project => {
+      const projectObj = project.toObject();
+      return {
+        ...projectObj,
+        user: projectObj.owner, // Map owner to user
+        views: projectObj.views || 0
+      };
+    });
 
     res.json({
       success: true,
-      projects,
-      count: projects.length
+      projects: transformedProjects, // 🔧 Use transformed projects
+      count: transformedProjects.length
     });
   } catch (error) {
     console.error(error);
@@ -242,6 +279,5 @@ module.exports = {
   getProjectById,
   updateProject,
   deleteProject,
-  getPublicProjects,
   searchProjects,
 };
