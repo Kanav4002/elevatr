@@ -154,4 +154,4 @@ temp/
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw?mv frontend/.gitignore .gitignore
