@@ -1,32 +1,59 @@
 import React from 'react'
 import { useAuth } from '../context/AuthContext';
 
-// Simple HomePage component
 const HomePage = () => {
-  const { user, logout } = useAuth();
-  
-  const handleLogout = () => {
-    logout();
-  }
+  const { user } = useAuth();
 
   return (
-    <div className='text-center p-8'>
-      <h1 className='text-4xl font-bold text-gray-800 mb-4'>Welcome to Elevatr</h1>
+    <div className='text-center p-8 max-w-4xl mx-auto'>
+      <h1 className='text-4xl font-bold text-gray-800 mb-6'>Welcome to Elevatr</h1>
+      
       {user && (
         <>
-          <p className='text-xl text-gray-600 mb-4'>
+          <p className='text-xl text-gray-600 mb-8'>
             Hello, {user.name}! ({user.role})
           </p>
-          <button 
-            onClick={handleLogout}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-          >
-            Logout
-          </button>
+          
+          {/* Add some quick action cards based on user role */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+            {user.role === 'student' ? (
+              // Student quick actions
+              <>
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-2">Find Jobs</h3>
+                  <p className="text-blue-600 text-sm">Discover exciting opportunities</p>
+                </div>
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h3 className="text-lg font-semibold text-green-800 mb-2">My Profile</h3>
+                  <p className="text-green-600 text-sm">Update your information</p>
+                </div>
+                <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                  <h3 className="text-lg font-semibold text-purple-800 mb-2">Applications</h3>
+                  <p className="text-purple-600 text-sm">Track your applications</p>
+                </div>
+              </>
+            ) : (
+              // Recruiter quick actions
+              <>
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-2">Post Job</h3>
+                  <p className="text-blue-600 text-sm">Create new job listings</p>
+                </div>
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h3 className="text-lg font-semibold text-green-800 mb-2">Candidates</h3>
+                  <p className="text-green-600 text-sm">Browse student profiles</p>
+                </div>
+                <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                  <h3 className="text-lg font-semibold text-purple-800 mb-2">My Jobs</h3>
+                  <p className="text-purple-600 text-sm">Manage your listings</p>
+                </div>
+              </>
+            )}
+          </div>
         </>
       )}
     </div>
   );
 };
 
-export default HomePage
+export default HomePage;
