@@ -60,10 +60,10 @@ const Navbar = () => {
                   )}
                   
                   <Link 
-                    to="/jobs" 
+                    to={user?.role === 'recruiter' ? '/jobs/manage' : '/jobs'} 
                     className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition duration-200"
                   >
-                    {user?.role === 'recruiter' ? 'Post Jobs' : 'Find Jobs'}
+                    {user?.role === 'recruiter' ? 'Manage Jobs' : 'Find Jobs'}
                   </Link>
 
                   {user?.role === 'student' && (

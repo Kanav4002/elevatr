@@ -271,10 +271,7 @@ const deleteJob = async (req, res) => {
 // @route   GET /api/jobs/my
 // @access  Protected (Recruiter only)
 const getMyJobs = async (req, res) => {
-  try {
-    // Debug: Check if user exists and role
-    // console.log('User from token:', req.user);
-    
+  try {    
     // Check if user is recruiter
     if (req.user.role !== 'recruiter') {
       return res.status(403).json({
@@ -284,21 +281,17 @@ const getMyJobs = async (req, res) => {
     }
 
     const recruiterId = req.user.id;
-    console.log('Recruiter ID:', recruiterId);
     
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
     // Debug: Check if jobs exist for this recruiter
     const jobsCount = await Job.countDocuments({ postedBy: recruiterId });
-    console.log('Jobs count for recruiter:', jobsCount);
 
     const jobs = await Job.find({ postedBy: recruiterId })
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-
-    console.log('Found jobs:', jobs.length);
 
     const total = await Job.countDocuments({ postedBy: recruiterId });
 

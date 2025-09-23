@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { applicationAPI } from '../services/api';
+import { applicationAPI, projectAPI } from '../services/api';
 
 const HomePage = () => {
   const { user, isAuthenticated } = useAuth();
   
-  // ✅ NEW: State for dynamic counters
   const [stats, setStats] = useState({
     applications: 0,
     projects: 0,
@@ -15,61 +14,163 @@ const HomePage = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ NEW: Fetch user stats when component loads
   useEffect(() => {
     if (isAuthenticated() && user) {
       fetchUserStats();
     }
   }, [isAuthenticated, user]);
 
-  // ✅ NEW: Function to fetch user statistics
-  const fetchUserStats = async () => {
-    try {
-      setLoading(true);
+// ✅ ENHANCED: Better project fetching with more debugging
+const fetchUserStats = async () => {
+  try {
+    setLoading(true);
+    
+    if (user?.role === 'student') {
+      let applications = [];
+      let projects = [];
       
-      if (user?.role === 'student') {
-        // Fetch applications for students
+      // ✅ Fetch applications safely
+      try {
         const appResponse = await applicationAPI.getMyApplications();
-        const applications = appResponse.data.applications || [];
-        
-        setStats(prev => ({
-          ...prev,
-          applications: applications.length
-        }));
-
-        // Set recent activity for applications
-        const recentApps = applications.slice(0, 3).map(app => ({
-          type: 'application',
-          message: `Applied to ${app.job?.title} at ${app.job?.company}`,
-          status: app.status,
-          timestamp: app.createdAt
-        }));
-        
-        setRecentActivity([
-          ...recentApps,
-          {
-            type: 'general',
-            message: 'Account created successfully',
-            timestamp: user.createdAt
-          }
-        ]);
+        applications = appResponse.data.applications || appResponse.data || [];
+        console.log('✅ Applications fetched:', applications.length);
+      } catch (error) {
+        console.log('❌ Applications not available:', error.message);
       }
       
-      // TODO: Add projects count and recruiter stats later
+      // ✅ DEBUGGING: Better project fetching
+      try {
+        console.log('📡 Trying /projects (all projects)...');
+        const allProjectsResponse = await projectAPI.getAllProjects();
+        console.log('📦 Full API response:', allProjectsResponse.data);
+        
+        const allProjects = allProjectsResponse.data.projects || allProjectsResponse.data || [];
+        console.log('📋 All projects count:', allProjects.length);
+        
+        if (Array.isArray(allProjects) && allProjects.length > 0) {
+          const userId = user._id || user.id;
+          console.log('🔍 Looking for projects by user ID:', userId);
+          
+          // ✅ LOG FIRST 2 PROJECTS COMPLETELY
+          console.log('📄 First project full structure:');
+          console.log(JSON.stringify(allProjects[0], null, 2));
+          if (allProjects.length > 1) {
+            console.log('📄 Second project full structure:');
+            console.log(JSON.stringify(allProjects[1], null, 2));
+          }
+          
+          // ✅ TEMPORARY: Assign ALL projects to user for testing
+          console.log('🧪 TESTING: Assigning all projects to current user for debugging');
+          projects = allProjects; // Temporarily assign all projects
+          
+          console.log('✅ TEMP: All projects assigned to user:', projects.length);
+          
+        } else {
+          console.log('⚠️ No projects returned from API');
+        }
+        
+      } catch (error) {
+        console.log('❌ Projects endpoint failed:', error.message);
+        projects = [];
+      }
       
-    } catch (error) {
-      console.error('Error fetching user stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // ✅ FORCE UPDATE: Set stats with detailed logging
+      const newStats = {
+        applications: Array.isArray(applications) ? applications.length : 0,
+        projects: Array.isArray(projects) ? projects.length : 0,
+        messages: 0
+      };
+      
+      console.log('📊 BEFORE setState - Current stats:', stats);
+      console.log('📊 SETTING new stats:', newStats);
+      
+      setStats(newStats);
+      
+      // ✅ Force re-render by updating key
+      console.log('🔄 Stats should update now...');
+      
+      // Give React time to update
+      setTimeout(() => {
+        console.log('📊 AFTER setState - Stats should be:', newStats);
+        console.log('📊 Actual stats state:', stats);
+      }, 100);
 
-  // If user is not authenticated, show landing page
+      // ✅ Create recent activity
+      const activities = [];
+      
+      // Add application activities
+      if (Array.isArray(applications) && applications.length > 0) {
+        applications.slice(0, 2).forEach(app => {
+          activities.push({
+            type: 'application',
+            message: `Applied to ${app.job?.title || 'a position'} at ${app.job?.company || 'a company'}`,
+            status: app.status || 'pending',
+            timestamp: app.createdAt || app.appliedAt
+          });
+        });
+      }
+      
+      // Add project activities
+      if (Array.isArray(projects) && projects.length > 0) {
+        projects.slice(0, 2).forEach(project => {
+          activities.push({
+            type: 'project',
+            message: `Created project "${project.title || project.name || 'Untitled'}"`,
+            status: 'created',
+            timestamp: project.createdAt
+          });
+        });
+      }
+      
+      // Add welcome message
+      if (activities.length <= 2) { // Only applications, no projects
+        activities.push({
+          type: 'general',
+          message: `Welcome ${user.name}! You have ${projects.length} projects to showcase.`,
+          timestamp: user.createdAt || new Date().toISOString()
+        });
+      }
+      
+      // Sort by timestamp and take top 4
+      activities.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+      setRecentActivity(activities.slice(0, 4));
+      
+      console.log('✅ Recent activity set:', activities);
+      
+    } else {
+      // Recruiter default stats
+      setStats({
+        applications: 0,
+        projects: 0,
+        messages: 0
+      });
+      
+      setRecentActivity([{
+        type: 'general',
+        message: 'Welcome to your recruiter dashboard',
+        timestamp: new Date().toISOString()
+      }]);
+    }
+    
+  } catch (error) {
+    console.error('❌ Error fetching user stats:', error);
+    setStats({ applications: 0, projects: 0, messages: 0 });
+    setRecentActivity([{
+      type: 'general',
+      message: 'Welcome to Elevatr!',
+      timestamp: new Date().toISOString()
+    }]);
+  } finally {
+    console.log('🏁 fetchUserStats completed');
+    setLoading(false);
+  }
+};
+
   if (!isAuthenticated()) {
     return <LandingPage />;
   }
 
-  // Get current time for greeting
+  // Helper functions
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -77,11 +178,11 @@ const HomePage = () => {
     return 'Good evening';
   };
 
-  // Get user's first name
   const firstName = user?.name?.split(' ')[0] || 'User';
 
-  // ✅ NEW: Format timestamp for recent activity
   const formatTimestamp = (timestamp) => {
+    if (!timestamp) return 'Recently';
+    
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now - time) / (1000 * 60));
@@ -92,22 +193,32 @@ const HomePage = () => {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  const getActivityIconColor = (type, status) => {
+    if (type === 'application') {
+      if (status === 'accepted') return 'bg-green-500';
+      if (status === 'rejected') return 'bg-red-500';
+      if (status === 'shortlisted') return 'bg-purple-500';
+      return 'bg-blue-500';
+    }
+    if (type === 'project') return 'bg-green-500';
+    return 'bg-gray-400';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
         {/* Welcome Header */}
         <div className="mb-8">
           <div className="bg-white rounded-xl shadow-sm border p-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                {/* User Avatar */}
                 <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-xl">
-                    {user?.name?.charAt(0)?.toUpperCase()}
+                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </span>
                 </div>
                 
-                {/* Welcome Text */}
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">
                     {getGreeting()}, {firstName}! 👋
@@ -124,7 +235,6 @@ const HomePage = () => {
                 </div>
               </div>
 
-              {/* Quick Action Button */}
               <div className="hidden md:block">
                 {user?.role === 'student' ? (
                   <Link
@@ -138,7 +248,7 @@ const HomePage = () => {
                   </Link>
                 ) : (
                   <Link
-                    to="/jobs"
+                    to="/jobs/post"
                     className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-lg hover:shadow-xl"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +265,6 @@ const HomePage = () => {
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {user?.role === 'student' ? (
-            // Student Quick Actions
             <>
               <Link to="/projects/browse" className="group">
                 <div className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-all duration-200 group-hover:border-blue-200">
@@ -178,6 +287,13 @@ const HomePage = () => {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">My Projects</h3>
                   <p className="text-gray-600 text-sm">Manage and showcase your work</p>
+                  {stats.projects > 0 && (
+                    <div className="mt-2">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {stats.projects} project{stats.projects !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </Link>
 
@@ -193,7 +309,6 @@ const HomePage = () => {
                 </div>
               </Link>
 
-              {/* ✅ NEW: Applications Quick Action */}
               <Link to="/applications" className="group">
                 <div className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-all duration-200 group-hover:border-orange-200">
                   <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
@@ -203,7 +318,6 @@ const HomePage = () => {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">My Applications</h3>
                   <p className="text-gray-600 text-sm">Track your job application progress</p>
-                  {/* ✅ NEW: Application count badge */}
                   {stats.applications > 0 && (
                     <div className="mt-2">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
@@ -215,7 +329,6 @@ const HomePage = () => {
               </Link>
             </>
           ) : (
-            // Recruiter Quick Actions (unchanged)
             <>
               <Link to="/projects/browse" className="group">
                 <div className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-all duration-200 group-hover:border-blue-200">
@@ -229,7 +342,7 @@ const HomePage = () => {
                 </div>
               </Link>
 
-              <Link to="/jobs" className="group">
+              <Link to="/jobs/post" className="group">
                 <div className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-all duration-200 group-hover:border-green-200">
                   <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
                     <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,15 +354,15 @@ const HomePage = () => {
                 </div>
               </Link>
 
-              <Link to="/messages" className="group">
+              <Link to="/jobs/manage" className="group">
                 <div className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-all duration-200 group-hover:border-purple-200">
                   <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
                     <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m10-8V7a2 2 0 00-2-2h-2m4 8h2a2 2 0 002-2V7a2 2 0 00-2-2h-2m0 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v0" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Messages</h3>
-                  <p className="text-gray-600 text-sm">Connect with potential candidates</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Manage Jobs</h3>
+                  <p className="text-gray-600 text-sm">Track applications and manage postings</p>
                 </div>
               </Link>
 
@@ -270,7 +383,6 @@ const HomePage = () => {
 
         {/* Stats & Activity Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Quick Stats */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Your Activity</h2>
@@ -289,7 +401,6 @@ const HomePage = () => {
                   </div>
                   
                   <div className="text-center p-4 bg-green-50 rounded-lg">
-                    {/* ✅ UPDATED: Dynamic applications count */}
                     <div className="text-2xl font-bold text-green-600">{stats.applications}</div>
                     <div className="text-sm text-gray-600">
                       {user?.role === 'student' ? 'Applications' : 'Applications Received'}
@@ -305,7 +416,6 @@ const HomePage = () => {
             </div>
           </div>
 
-          {/* Recent Activity */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
             <div className="space-y-3">
@@ -316,13 +426,7 @@ const HomePage = () => {
               ) : recentActivity.length > 0 ? (
                 recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-start space-x-3 text-sm">
-                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                      activity.type === 'application' 
-                        ? activity.status === 'accepted' ? 'bg-green-500' 
-                          : activity.status === 'rejected' ? 'bg-red-500'
-                          : 'bg-blue-500'
-                        : 'bg-gray-300'
-                    }`}></div>
+                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${getActivityIconColor(activity.type, activity.status)}`}></div>
                     <div className="flex-1">
                       <p className="text-gray-700">{activity.message}</p>
                       <p className="text-gray-500 text-xs">{formatTimestamp(activity.timestamp)}</p>
@@ -354,8 +458,8 @@ const HomePage = () => {
               </h3>
               <p className="text-blue-100">
                 {user?.role === 'student' 
-                  ? stats.applications > 0 
-                    ? 'Keep track of your applications! Follow up on pending applications and continue applying to more positions.'
+                  ? stats.projects > 0 
+                    ? `Great job on your ${stats.projects} project${stats.projects !== 1 ? 's' : ''}! ${stats.applications > 0 ? 'Keep applying to more positions and' : 'Start applying to jobs and'} showcase your work to attract recruiters.`
                     : 'Start by adding your first project! Showcase your best work with detailed descriptions, GitHub links, and live demos to attract recruiters.'
                   : 'Browse student projects to discover hidden talent! Look for creativity, technical skills, and passion in their work.'
                 }
@@ -368,7 +472,6 @@ const HomePage = () => {
   );
 };
 
-// Landing page for non-authenticated users (unchanged)
 const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">

@@ -1,8 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Jobs from './pages/Jobs';
-import MyApplications from './components/applications/MyApplications';
+import PostJobPage from './pages/PostJob';
+import ManageJobsPage from './pages/ManageJobs'; 
 import Applications from './pages/Applications';
+import JobApplicants from './components/jobs/JobApplications';
+import EditJob from './components/jobs/EditJob';
 import RegisterPage from './(Auth)/register/RegisterPage';
 import LoginPage from './(Auth)/login/LoginPage';
 import HomePage from './components/HomePage';
@@ -82,6 +85,29 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="jobs/post" element={
+            <ProtectedRoute>
+              <PostJobPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="jobs/manage" element={
+            <ProtectedRoute>
+              <ManageJobsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="jobs/:jobId/applicants" element={
+            <ProtectedRoute>
+              <JobApplicants />
+            </ProtectedRoute>
+          } />
+
+          <Route path="jobs/:jobId/edit" element={
+            <ProtectedRoute>
+              <EditJob />
+            </ProtectedRoute>
+          } />
 
           <Route path="messages" element={
             <ProtectedRoute>
