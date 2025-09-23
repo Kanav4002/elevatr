@@ -25,11 +25,24 @@ const registerUser = async(req, res) => {
       role: role || 'student'
     });
 
+    const token = jwt.sign(
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h'}
+    );
+
+    res.cookie("token", token, { httpOnly: true, maxAge: 24*60*60*1000, secure: process.env.NODE_ENV === 'production' });
+
     // Remove password from response
     const userResponse = user.toObject();
     delete userResponse.password;
 
-    res.status(201).json({ user: userResponse, message: "User created successfully"});
+    res.status(201).json({ user: userResponse, message: "User created successfully", token: token });
   } catch (error) {
     res.status(500).json({ message: error.message}); 
   }

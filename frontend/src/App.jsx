@@ -1,5 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Jobs from './pages/Jobs';
+import MyApplications from './components/applications/MyApplications';
+import Applications from './pages/Applications';
 import RegisterPage from './(Auth)/register/RegisterPage';
 import LoginPage from './(Auth)/login/LoginPage';
 import HomePage from './components/HomePage';
@@ -18,9 +21,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Routes with Layout (Navbar + Footer) */}
         <Route path="/" element={<Layout />}>
-          {/* 🔧 MAKE HOME PAGE PUBLIC - Remove ProtectedRoute for landing page */}
           <Route index element={<HomePage />} />
           
           {/* 🔧 AUTH ROUTES - PUBLIC */}
@@ -69,15 +70,18 @@ function App() {
             </ProtectedRoute>
           }/>
 
-          {/* 🔧 ADD OTHER NAVBAR ROUTES - PROTECTED */}
-          <Route path="jobs" element={
+          <Route path='jobs' element={
+              <ProtectedRoute>
+                <Jobs/>
+              </ProtectedRoute>
+          }/>
+
+          <Route path="applications" element={
             <ProtectedRoute>
-              <div className="p-8 text-center">
-                <h1 className="text-2xl font-bold">Find Jobs - Coming Soon!</h1>
-                <p className="mt-4 text-gray-600">Job listings will be available here</p>
-              </div>
+              <Applications/>
             </ProtectedRoute>
           } />
+
 
           <Route path="messages" element={
             <ProtectedRoute>

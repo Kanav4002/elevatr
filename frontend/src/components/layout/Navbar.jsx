@@ -65,6 +65,15 @@ const Navbar = () => {
                   >
                     {user?.role === 'recruiter' ? 'Post Jobs' : 'Find Jobs'}
                   </Link>
+
+                  {user?.role === 'student' && (
+                    <Link 
+                      to="/applications" 
+                      className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition duration-200"
+                    >
+                      Applications
+                    </Link>
+                  )}
                   
                   <Link 
                     to="/messages" 
