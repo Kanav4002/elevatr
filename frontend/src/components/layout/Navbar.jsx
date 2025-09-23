@@ -190,31 +190,27 @@ const Navbar = () => {
               ) : (
                 // Unauthenticated Navigation  
                 <>
-                  {/* 🆕 ADD BROWSE PROJECTS FOR UNAUTH USERS TOO */}
                   <Link 
-                    to="/projects/browse" 
+                    to="/" 
                     className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition duration-200"
                   >
-                    Browse Projects
+                    Home
                   </Link>
-                  <Link 
-                    to="/jobs" 
-                    className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition duration-200"
-                  >
-                    Find Jobs
-                  </Link>
+                  
                   <Link 
                     to="/about" 
                     className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition duration-200"
                   >
                     About
                   </Link>
+                  
                   <Link
                     to="/login"
                     className="text-blue-600 hover:text-blue-700 px-3 py-2 text-sm font-medium border border-blue-600 rounded-md hover:bg-blue-50 transition duration-200"
                   >
                     Login
                   </Link>
+                  
                   <Link
                     to="/register"
                     className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 text-sm font-medium rounded-md transition duration-200"

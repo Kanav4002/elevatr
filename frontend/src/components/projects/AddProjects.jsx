@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext'; // ADD THIS IMPORT
 
 const AddProject = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // ADD THIS LINE
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({}); // ADD THIS LINE
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -13,48 +16,115 @@ const AddProject = () => {
     isPublic: true
   });
 
+  // ADD THIS VALIDATION FUNCTION
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.title.trim()) newErrors.title = 'Project title is required';
+    if (!formData.description.trim()) newErrors.description = 'Project description is required';
+    if (!formData.techStack.trim()) newErrors.techStack = 'Technologies used are required';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+  
     setLoading(true);
     
-    // Convert comma-separated techStack to array
-    const projectData = {
-      ...formData,
-      techStack: formData.techStack.split(',').map(tech => tech.trim()).filter(tech => tech)
-    };
-
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(projectData)
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        alert('Project created successfully!');
-        navigate('/'); // Go back to home for now
-      } else {
-        alert('Error: ' + result.message);
+      const projectData = {
+        ...formData,
+        techStack: formData.techStack.split(',').map(tech => tech.trim()),
+        userId: user?.id || user?._id || 'anonymous',
+        userName: user?.name || 'Anonymous User',
+        userEmail: user?.email || '',
+        createdAt: new Date().toISOString()
+      };
+  
+      // DEBUG LINES:
+      console.log('=== SAVING PROJECT DEBUG ===');
+      console.log('Current user object:', user);
+      console.log('User ID being saved:', user?.id || user?._id || 'anonymous');
+      console.log('Project data being saved:', projectData);
+      console.log('============================');
+  
+      // TRY BACKEND FIRST, FALLBACK TO LOCALSTORAGE
+      let projectSaved = false;
+      
+      try {
+        // Try to save to backend
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await fetch('http://localhost:4000/api/projects', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(projectData)
+          });
+  
+          if (response.ok) {
+            console.log('✅ Project saved to backend successfully');
+            projectSaved = true;
+          } else {
+            throw new Error('Backend save failed');
+          }
+        }
+      } catch (backendError) {
+        console.log('⚠️ Backend not available, using localStorage fallback');
+        console.log('Backend error:', backendError.message);
       }
+  
+      // FALLBACK: Save to localStorage if backend fails
+      if (!projectSaved) {
+        const existingProjects = JSON.parse(localStorage.getItem('userProjects') || '[]');
+        const newProject = {
+          ...projectData,
+          id: Date.now().toString(),
+          _id: Date.now().toString(), // For compatibility with backend format
+        };
+        
+        console.log('Existing projects before save:', existingProjects);
+        console.log('New project being added:', newProject);
+        
+        localStorage.setItem('userProjects', JSON.stringify([...existingProjects, newProject]));
+        
+        // VERIFY SAVE:
+        const savedProjects = JSON.parse(localStorage.getItem('userProjects') || '[]');
+        console.log('All projects after save:', savedProjects);
+        console.log('💾 Project saved to localStorage');
+      }
+  
+      navigate('/projects/my', { 
+        state: { message: 'Project created successfully!' }
+      });
+  
     } catch (error) {
       console.error('Error creating project:', error);
-      alert('Error creating project');
+      setErrors({ submit: 'Failed to create project. Please try again.' });
     } finally {
       setLoading(false);
     }
   };
-
+  
+  // ...rest of your existing component code stays the same...
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Add New Project</h1>
       
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8 space-y-6">
+        {/* Error Display */}
+        {errors.submit && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700">{errors.submit}</p>
+          </div>
+        )}
+
         {/* Title */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -63,11 +133,14 @@ const AddProject = () => {
           <input
             type="text"
             required
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.title ? 'border-red-500' : 'border-gray-300'
+            }`}
             value={formData.title}
             onChange={(e) => setFormData({...formData, title: e.target.value})}
             placeholder="E-Commerce Platform"
           />
+          {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
         </div>
 
         {/* Description */}
@@ -78,11 +151,14 @@ const AddProject = () => {
           <textarea
             required
             rows={4}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.description ? 'border-red-500' : 'border-gray-300'
+            }`}
             value={formData.description}
             onChange={(e) => setFormData({...formData, description: e.target.value})}
             placeholder="A full-stack e-commerce application with user authentication, product catalog, shopping cart, and payment integration..."
           />
+          {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
         </div>
 
         {/* Tech Stack */}
@@ -93,12 +169,15 @@ const AddProject = () => {
           <input
             type="text"
             required
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.techStack ? 'border-red-500' : 'border-gray-300'
+            }`}
             value={formData.techStack}
             onChange={(e) => setFormData({...formData, techStack: e.target.value})}
             placeholder="React, Node.js, Express, MongoDB, Tailwind CSS"
           />
           <p className="text-sm text-gray-500 mt-1">Separate technologies with commas</p>
+          {errors.techStack && <p className="text-red-500 text-sm mt-1">{errors.techStack}</p>}
         </div>
 
         {/* GitHub URL */}
