@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -7,7 +8,7 @@ const authRoutes = require('./routes/auth.route');
 const projectRoutes = require('./routes/project.route');
 const jobRoutes = require('./routes/job.route');
 const applicationRoutes = require('./routes/application.route');
-require("dotenv").config();
+const aiRoutes = require('./routes/ai.route');
 
 // middleware
 app.use(cors());
@@ -18,6 +19,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World');

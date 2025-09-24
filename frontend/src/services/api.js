@@ -62,4 +62,10 @@ export const authAPI = {
   login: (data) => api.post('/auth/login', data),
 };
 
+export const aiAPI = {
+  generateInterviewQuestions: (jobId) => 
+    api.post('/ai/interview-questions', { jobId })
+};
+
+
 export default api;

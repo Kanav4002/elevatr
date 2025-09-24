@@ -1,133 +1,214 @@
-// src/components/applications/MyApplications.jsx
 import { useState, useEffect } from 'react';
-import { applicationAPI } from '../../services/api';
-import ApplicationCard from './ApplicationCard';
+import { applicationAPI, aiAPI } from '../../services/api';
+import InterviewQuestionsModal from '../ai/InterviewQuestionsModal';
+import { format } from 'date-fns';
 
 const MyApplications = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
-  const [summary, setSummary] = useState({});
+  const [error, setError] = useState(null);
+  
+  // AI Modal State
+  const [aiModal, setAiModal] = useState({
+    isOpen: false,
+    loading: false,
+    questions: null,
+    jobTitle: '',
+    company: ''
+  });
 
   useEffect(() => {
-    fetchMyApplications();
-  }, [filter]);
+    fetchApplications();
+  }, []);
 
-  const fetchMyApplications = async () => {
+  const fetchApplications = async () => {
     try {
       setLoading(true);
-      const params = filter !== 'all' ? { status: filter } : {};
-      const response = await applicationAPI.getMyApplications(params);
-      
-      console.log('API Response:', response.data);
-      console.log('Applications:', response.data.applications);
-      
-      const applications = response.data.applications || [];
-      setApplications(applications);
-      
-      // ✅ NEW: Calculate summary from applications array
-      const calculatedSummary = applications.reduce((acc, app) => {
-        const status = app.status || 'applied';
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-      }, {
-        applied: 0,
-        viewed: 0,
-        shortlisted: 0,
-        accepted: 0,
-        rejected: 0
-      });
-      
-      console.log('Calculated Summary:', calculatedSummary);
-      setSummary(calculatedSummary);
-      
+      const response = await applicationAPI.getMyApplications();
+      setApplications(response.data.applications || []);
     } catch (error) {
-      console.error('Error fetching applications:', error);
-      setApplications([]);
-      setSummary({});
+      setError('Failed to fetch applications');
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
-  
+
+  const handleGenerateQuestions = async (jobId, jobTitle, company) => {
+    setAiModal({
+      isOpen: true,
+      loading: true,
+      questions: null,
+      jobTitle,
+      company
+    });
+
+    try {
+      const response = await aiAPI.generateInterviewQuestions(jobId);
+      setAiModal(prev => ({
+        ...prev,
+        loading: false,
+        questions: response.data.questions
+      }));
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      setAiModal(prev => ({
+        ...prev,
+        loading: false,
+        questions: null
+      }));
+    }
+  };
+
+  const closeAiModal = () => {
+    setAiModal({
+      isOpen: false,
+      loading: false,
+      questions: null,
+      jobTitle: '',
+      company: ''
+    });
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      reviewing: 'bg-blue-100 text-blue-800 border-blue-200',
+      accepted: 'bg-green-100 text-green-800 border-green-200',
+      rejected: 'bg-red-100 text-red-800 border-red-200'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+        <div className="container mx-auto px-4 py-12">
+          <div className="flex justify-center items-center h-64">
+            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">My Applications</h1>
-      
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-blue-100 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-blue-600">{summary.applied || 0}</div>
-          <div className="text-sm text-blue-700">Applied</div>
-        </div>
-        <div className="bg-yellow-100 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-yellow-600">{summary.viewed || 0}</div>
-          <div className="text-sm text-yellow-700">Viewed</div>
-        </div>
-        <div className="bg-purple-100 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-purple-600">{summary.shortlisted || 0}</div>
-          <div className="text-sm text-purple-700">Shortlisted</div>
-        </div>
-        <div className="bg-green-100 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-green-600">{summary.accepted || 0}</div>
-          <div className="text-sm text-green-700">Accepted</div>
-        </div>
-        <div className="bg-red-100 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-red-600">{summary.rejected || 0}</div>
-          <div className="text-sm text-red-700">Rejected</div>
-        </div>
-      </div>
-
-      {/* Filter Buttons */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {['all', 'applied', 'viewed', 'shortlisted', 'accepted', 'rejected'].map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilter(status)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              filter === status
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {applications.length === 0 ? (
-        <div className="text-center py-16">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
-          <p className="text-gray-500 mb-4">
-            {filter === 'all' 
-              ? "You haven't applied to any jobs yet" 
-              : `No applications with status "${filter}"`
-            }
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <div className="container mx-auto px-4 py-12">
+        
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            My Applications
+          </h1>
+          <p className="text-xl text-gray-600">
+            Track your job applications and prepare for interviews
           </p>
-          <a
-            href="/jobs"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-          >
-            Browse Jobs
-          </a>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {applications.map((application) => (
-            <ApplicationCard key={application._id} application={application} />
-          ))}
+
+        {/* Error State */}
+        {error && (
+          <div className="max-w-4xl mx-auto mb-8">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <p className="text-red-800">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Applications List */}
+        <div className="max-w-6xl mx-auto">
+          {applications.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-4xl">📄</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">No Applications Yet</h3>
+              <p className="text-gray-600 mb-8">Start applying to jobs to see them here!</p>
+            </div>
+          ) : (
+            <div className="grid gap-6">
+              {applications.map((application) => (
+                <div key={application._id} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                  <div className="flex items-start justify-between">
+                    
+                    {/* Job Info */}
+                    <div className="flex-1">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                          <span className="text-white text-xl font-bold">
+                            {application.job?.company?.charAt(0)?.toUpperCase() || 'C'}
+                          </span>
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 mb-1">
+                            {application.job?.title || 'Job Title'}
+                          </h3>
+                          <p className="text-lg text-gray-600 mb-2">
+                            {application.job?.company || 'Company'}
+                          </p>
+                          <p className="text-gray-500 mb-4">
+                            Applied on {format(new Date(application.appliedAt), 'MMM dd, yyyy')}
+                          </p>
+                          
+                          <div className="flex items-center space-x-4">
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(application.status)}`}>
+                              {application.status?.charAt(0)?.toUpperCase() + application.status?.slice(1) || 'Pending'}
+                            </span>
+                            
+                            {application.job?.location && (
+                              <span className="text-gray-500 text-sm flex items-center">
+                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                </svg>
+                                {application.job.location}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col space-y-2">
+                      <button
+                        onClick={() => handleGenerateQuestions(
+                          application.job._id,
+                          application.job.title,
+                          application.job.company
+                        )}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-medium text-sm transition-all transform hover:scale-105 shadow-lg"
+                      >
+                        🤖 Generate Questions
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Cover Letter Preview */}
+                  {application.coverLetter && (
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                      <h4 className="font-semibold text-gray-800 mb-2">Cover Letter:</h4>
+                      <p className="text-gray-600 text-sm bg-gray-50 p-4 rounded-lg line-clamp-3">
+                        {application.coverLetter}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* AI Questions Modal */}
+      <InterviewQuestionsModal
+        isOpen={aiModal.isOpen}
+        onClose={closeAiModal}
+        questions={aiModal.questions}
+        jobTitle={aiModal.jobTitle}
+        company={aiModal.company}
+        loading={aiModal.loading}
+      />
     </div>
   );
 };
