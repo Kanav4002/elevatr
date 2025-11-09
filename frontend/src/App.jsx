@@ -16,6 +16,7 @@ import MyProjects from './components/projects/MyProjects';
 import EditProject from './components/projects/EditProject';
 import ProjectsBrowse from './components/projects/ProjectsBrowse';
 import ProjectDetail from './components/projects/ProjectDetail';
+import Profile from './pages/Profile';
 import Layout from './components/Layout';
 import './App.css';
 import './index.css';
@@ -120,10 +121,13 @@ function App() {
 
           <Route path="profile" element={
             <ProtectedRoute>
-              <div className="p-8 text-center">
-                <h1 className="text-2xl font-bold">Profile - Coming Soon!</h1>
-                <p className="mt-4 text-gray-600">User profile management will be available here</p>
-              </div>
+              <Profile />
+            </ProtectedRoute>
+          } />
+
+          <Route path="profile/:userId" element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           } />
 

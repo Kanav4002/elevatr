@@ -67,5 +67,20 @@ export const aiAPI = {
     api.post('/ai/interview-questions', { jobId })
 };
 
+// Profile API
+export const profileAPI = {
+  getProfile: (userId) => userId ? api.get(`/profile/user/${userId}`) : api.get('/profile/me'),
+  updateProfile: (data) => api.put('/profile/update', data),
+  uploadProfilePicture: (formData) => api.post('/profile/upload-picture', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  uploadResume: (formData) => api.post('/profile/upload-resume', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  setDefaultResume: (resumeId) => api.put(`/profile/resume/${resumeId}/default`),
+  deleteResume: (resumeId) => api.delete(`/profile/resume/${resumeId}`),
+  toggleFollow: (targetUserId) => api.post(`/profile/follow/${targetUserId}`),
+  analyzeResume: (data) => api.post('/profile/analyze-resume', data)
+};
 
 export default api;

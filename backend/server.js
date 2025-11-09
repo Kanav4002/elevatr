@@ -9,10 +9,14 @@ const projectRoutes = require('./routes/project.route');
 const jobRoutes = require('./routes/job.route');
 const applicationRoutes = require('./routes/application.route');
 const aiRoutes = require('./routes/ai.route');
+const profileRoutes = require('./routes/profile.route');
 
 // middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static files (uploaded files)
+app.use('/uploads', express.static('uploads'));
 
 // routes
 app.use('/api/auth', authRoutes);
@@ -20,6 +24,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/profile', profileRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World');

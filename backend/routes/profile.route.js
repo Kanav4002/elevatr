@@ -1,0 +1,39 @@
+const express = require('express');
+const {
+  getProfile,
+  updateProfile,
+  uploadProfilePicture,
+  uploadResume,
+  setDefaultResume,
+  deleteResume,
+  toggleFollow,
+  analyzeResume,
+  upload
+} = require('../controllers/profile.controller');
+const { verifyAuth } = require('../middlewares/auth.middleware');
+
+const router = express.Router();
+
+// Public routes
+router.get('/user/:userId', getProfile); // Get specific user's profile
+router.get('/me', verifyAuth, getProfile); // Get own profile (requires auth)
+
+// Protected routes
+router.use(verifyAuth); // All routes below require authentication
+
+// Profile management
+router.put('/update', updateProfile);
+router.post('/upload-picture', upload.single('profilePicture'), uploadProfilePicture);
+
+// Resume management
+router.post('/upload-resume', upload.single('resume'), uploadResume);
+router.put('/resume/:resumeId/default', setDefaultResume);
+router.delete('/resume/:resumeId', deleteResume);
+
+// Social features
+router.post('/follow/:targetUserId', toggleFollow);
+
+// ATS Analysis
+router.post('/analyze-resume', analyzeResume);
+
+module.exports = router;
