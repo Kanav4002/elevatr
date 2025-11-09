@@ -210,20 +210,20 @@ const fetchUserStats = async () => {
         
         {/* Welcome Header */}
         <div className="mb-8">
-          <div className="bg-white rounded-xl shadow-sm border p-8">
-            <div className="flex items-center justify-between">
+          <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-xl">
+                <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-lg sm:text-xl">
                     {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </span>
                 </div>
                 
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                     {getGreeting()}, {firstName}! 👋
                   </h1>
-                  <p className="text-lg text-gray-600 mt-1">
+                  <p className="text-base sm:text-lg text-gray-600 mt-1">
                     Welcome back to your {user?.role === 'student' ? 'student' : 'recruiter'} dashboard
                   </p>
                   <div className="flex items-center mt-2">
@@ -467,6 +467,31 @@ const fetchUserStats = async () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Floating Action Button */}
+      <div className="md:hidden fixed bottom-6 right-6 z-50">
+        {user?.role === 'student' ? (
+          <Link
+            to="/projects/new"
+            className="flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 hover:scale-110"
+            aria-label="Add New Project"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </Link>
+        ) : (
+          <Link
+            to="/jobs/post"
+            className="flex items-center justify-center w-14 h-14 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-all duration-200 hover:scale-110"
+            aria-label="Post New Job"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </Link>
+        )}
       </div>
     </div>
   );

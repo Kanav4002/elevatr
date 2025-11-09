@@ -1,0 +1,88 @@
+/* Hamburger Menu Styles */
+.hamburger-menu {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+}
+
+.hamburger-line {
+  background-color: #374151; /* gray-700 */
+  width: 32px;
+  height: 3px;
+  margin: 3px 0;
+  transition: all 0.3s ease-in-out;
+  border-radius: 2px;
+}
+
+/* Hamburger Animation - Top Line */
+.hamburger-line.top.active {
+  transform: rotate(-45deg) translate(-6px, 6px);
+}
+
+/* Hamburger Animation - Middle Line */
+.hamburger-line.middle.active {
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Hamburger Animation - Bottom Line */
+.hamburger-line.bottom.active {
+  transform: rotate(45deg) translate(-6px, -6px);
+}
+
+/* Mobile Menu Links */
+.mobile-menu-link {
+  display: block;
+  width: 100%;
+  padding: 16px 24px;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  background: none;
+  text-align: center;
+}
+
+.mobile-menu-link:hover {
+  background-color: white;
+  color: #1e40af; /* blue-800 */
+  transform: translateY(-1px);
+}
+
+/* First menu item margin */
+.mobile-menu-link:first-child {
+  margin-top: 20px;
+}
+
+/* Last menu item margin */
+.mobile-menu-link:last-child {
+  margin-bottom: 20px;
+}
+
+/* Mobile Dropdown Animation */
+.mobile-dropdown-menu {
+  transition: max-height 0.4s ease-in-out;
+}
+
+/* Smooth height transition for better animation */
+.mobile-dropdown-menu.open {
+  max-height: 600px; /* Adjust based on content */
+}
+
+.mobile-dropdown-menu.closed {
+  max-height: 0;
+}
+
+/* Hover effect for hamburger */
+.hamburger-menu:hover .hamburger-line {
+  background-color: #2563eb; /* blue-600 */
+}
+
+/* Active state for hamburger when menu is open */
+.hamburger-menu:has(input:checked) .hamburger-line {
+  background-color: #2563eb; /* blue-600 */
+}

@@ -1,21 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
     navigate('/login');
   };
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  // Close mobile menu on window resize (when switching to desktop view)
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) { // md breakpoint
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && !event.target.closest('nav')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [isMobileMenuOpen]);
 
   return (
     <nav className="bg-white shadow-lg border-b">
@@ -233,12 +270,143 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <button className="text-gray-700 hover:text-blue-600 focus:outline-none focus:text-blue-600">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+            <input 
+              id="mobile-toggle" 
+              type="checkbox" 
+              className="hidden"
+              checked={isMobileMenuOpen}
+              onChange={toggleMobileMenu}
+            />
+            <label 
+              htmlFor="mobile-toggle" 
+              className="hamburger-menu cursor-pointer block relative w-10 h-10 z-50"
+              aria-label="Toggle mobile menu"
+            >
+              <div className={`hamburger-line top ${isMobileMenuOpen ? 'active' : ''}`}></div>
+              <div className={`hamburger-line middle ${isMobileMenuOpen ? 'active' : ''}`}></div>
+              <div className={`hamburger-line bottom ${isMobileMenuOpen ? 'active' : ''}`}></div>
+            </label>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Dropdown Menu */}
+      <div className={`mobile-dropdown-menu md:hidden overflow-hidden ${isMobileMenuOpen ? 'open' : 'closed'}`}>
+        <div className="bg-blue-900 shadow-xl">
+          {isAuthenticated() ? (
+            // Authenticated Mobile Navigation
+            <div>
+                <Link 
+                  to="/" 
+                  className="mobile-menu-link"
+                  onClick={closeMobileMenu}
+                >
+                  Dashboard
+                </Link>
+                
+                <Link 
+                  to="/projects/browse" 
+                  className="mobile-menu-link"
+                  onClick={closeMobileMenu}
+                >
+                  Browse Projects
+                </Link>
+                
+                {user?.role === 'student' && (
+                  <Link 
+                    to="/projects/my" 
+                    className="mobile-menu-link"
+                    onClick={closeMobileMenu}
+                  >
+                    My Projects
+                  </Link>
+                )}
+                
+                <Link 
+                  to={user?.role === 'recruiter' ? '/jobs/manage' : '/jobs'} 
+                  className="mobile-menu-link"
+                  onClick={closeMobileMenu}
+                >
+                  {user?.role === 'recruiter' ? 'Manage Jobs' : 'Find Jobs'}
+                </Link>
+
+                {user?.role === 'student' && (
+                  <Link 
+                    to="/applications" 
+                    className="mobile-menu-link"
+                    onClick={closeMobileMenu}
+                  >
+                    Applications
+                  </Link>
+                )}
+                
+                <Link 
+                  to="/messages" 
+                  className="mobile-menu-link"
+                  onClick={closeMobileMenu}
+                >
+                  Messages
+                </Link>
+
+                <Link
+                  to="/profile"
+                  className="mobile-menu-link"
+                  onClick={closeMobileMenu}
+                >
+                  My Profile
+                </Link>
+                
+                <Link
+                  to="/settings"
+                  className="mobile-menu-link"
+                  onClick={closeMobileMenu}
+                >
+                  Settings
+                </Link>
+
+                <button
+                  onClick={handleLogout}
+                  className="mobile-menu-link text-red-300 hover:text-red-100 hover:bg-red-800"
+                >
+                  Logout
+                </button>
+            </div>
+          ) : (
+            // Unauthenticated Mobile Navigation  
+            <div>
+              <Link 
+                to="/" 
+                className="mobile-menu-link"
+                onClick={closeMobileMenu}
+              >
+                Home
+              </Link>
+              
+              <Link 
+                to="/about" 
+                className="mobile-menu-link"
+                onClick={closeMobileMenu}
+              >
+                About
+              </Link>
+              
+              <Link
+                to="/login"
+                className="mobile-menu-link"
+                onClick={closeMobileMenu}
+              >
+                Login
+              </Link>
+              
+              <Link
+                to="/register"
+                className="mobile-menu-link bg-blue-700 hover:bg-blue-600 font-semibold"
+                onClick={closeMobileMenu}
+              >
+                Register
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>

@@ -1,13 +1,12 @@
 const User = require('../models/user.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const verifyAuth = require('../middlewares/auth.middleware');
+const {verifyAuth} = require('../middlewares/auth.middleware');
 
 const registerUser = async(req, res) => {
   try {
     const { name, email, password, role } = req.body;
     if (!name || !email || !password) {
-      // throw new Error("All fields are required");
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -52,19 +51,16 @@ const loginUser = async(req, res) => {
   try {
     const {email, password} = req.body;
     if(!email || !password) {
-      // throw new Error("All fields are required");
       return res.status(400).json({ message: "All fields are required"});
     }
 
     const user = await User.findOne({email: email});
     if(!user) {
-      // throw new Error("Invalid email or password");
       return res.status(401).json({ message: "Invalid email or password"});
     }
 
     const isMatched = await bcrypt.compare(password, user.password);
     if(!isMatched) {
-      // throw new Error("Invalid email or password");
       return res.status(401).json({ message: "Invalid email or password"});
     }
 

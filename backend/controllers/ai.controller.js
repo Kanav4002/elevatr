@@ -35,7 +35,24 @@ const generateInterviewQuestions = async (req, res) => {
       try {
         console.log('🤖 Trying AI...');
         
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // Try different models in order of preference (using working models)
+        const modelNames = ['gemini-2.0-flash-exp', 'gemini-flash-latest'];
+        let model = null;
+        
+        for (const modelName of modelNames) {
+          try {
+            model = genAI.getGenerativeModel({ model: modelName });
+            console.log(`✅ Using model: ${modelName}`);
+            break;
+          } catch (modelError) {
+            console.log(`⚠️ Model ${modelName} not available:`, modelError.message);
+            continue;
+          }
+        }
+        
+        if (!model) {
+          throw new Error('No available Gemini models found');
+        }
         const prompt = `Create interview questions for ${job.title} at ${job.company}. 
         
 Return ONLY this JSON (no other text):
@@ -68,6 +85,12 @@ Return ONLY this JSON (no other text):
         }
       } catch (aiError) {
         console.log('⚠️ AI failed:', aiError.message);
+        console.log('⚠️ AI error details:', {
+          name: aiError.name,
+          status: aiError.status,
+          statusText: aiError.statusText,
+          stack: aiError.stack?.split('\n')[0] // Just first line of stack
+        });
       }
     }
 
