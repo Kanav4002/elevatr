@@ -1,4 +1,5 @@
 const Job = require('../models/job.model');
+const { createJobPostedNotification } = require('./notification.controller');
 
 // @desc    Get all jobs
 // @route   GET /api/jobs
@@ -123,6 +124,20 @@ const createJob = async (req, res) => {
 
     // Populate postedBy details for response
     await job.populate('postedBy', 'name email');
+
+    // Send notification to all students about new job posting
+    try {
+      await createJobPostedNotification({
+        jobId: job._id,
+        recruiterId: req.user.id,
+        jobTitle: job.title,
+        companyName: job.company
+      });
+      console.log(`📢 Job posted notification sent for: ${job.title}`);
+    } catch (notificationError) {
+      console.error('Error sending job posted notification:', notificationError);
+      // Don't fail the job creation if notification fails
+    }
 
     res.status(201).json({
       success: true,

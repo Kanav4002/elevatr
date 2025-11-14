@@ -18,14 +18,17 @@ import ProjectsBrowse from './components/projects/ProjectsBrowse';
 import ProjectDetail from './components/projects/ProjectDetail';
 import Profile from './pages/Profile';
 import Members from './pages/Members';
+import Notifications from './pages/Notifications';
 import Layout from './components/Layout';
+import { NotificationProvider } from './context/NotificationContext';
 import './App.css';
 import './index.css';
 
 function App() {
   return (
     <Router>
-      <Routes>
+      <NotificationProvider>
+        <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           
@@ -116,6 +119,12 @@ function App() {
               <Members />
             </ProtectedRoute>
           } />
+          
+          <Route path="notifications" element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          } />
 
           <Route path="messages" element={
             <ProtectedRoute>
@@ -149,7 +158,8 @@ function App() {
         </Route>
         {/* You can add routes without layout here if needed */}
         {/* <Route path="/admin" element={<AdminPage />} /> */}
-      </Routes>
+        </Routes>
+      </NotificationProvider>
     </Router>
   );
 }

@@ -1,6 +1,7 @@
 const User = require('../models/user.model');
 const multer = require('multer');
 const path = require('path');
+const { createFollowNotification } = require('./notification.controller');
 
 // Import AI functionality
 require('dotenv').config();
@@ -397,6 +398,25 @@ const toggleFollow = async (req, res) => {
     const updatedTargetUser = await User.findById(targetUserId).select('profile.followers profile.following');
     const followersCount = updatedTargetUser.profile?.followers?.length || 0;
     const followingCount = updatedTargetUser.profile?.following?.length || 0;
+
+    // Send follow notification (only when following, not unfollowing)
+    if (!isFollowing) {
+      try {
+        console.log(`🔔 Attempting to send follow notification from ${user.name} (${userId}) to ${targetUserId}`);
+        await createFollowNotification({
+          followerId: userId,
+          followedId: targetUserId,
+          followerName: user.name
+        });
+        console.log(`📢 Follow notification sent from ${user.name}`);
+      } catch (notificationError) {
+        console.error('Error sending follow notification:', notificationError);
+        console.error('Full error details:', notificationError);
+        // Don't fail the follow action if notification fails
+      }
+    } else {
+      console.log(`ℹ️ User was unfollowing, no notification sent`);
+    }
 
     res.json({
       success: true,

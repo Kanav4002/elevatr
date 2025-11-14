@@ -1,5 +1,6 @@
 const Application = require('../models/application.model');
 const Job = require('../models/job.model');
+const { createJobApplicationNotification } = require('./notification.controller');
 
 // @desc    Apply for a job
 // @route   POST /api/jobs/:id/apply
@@ -82,9 +83,25 @@ const applyForJob = async (req, res) => {
 
     // Populate job and student details for response
     await application.populate([
-      { path: 'job', select: 'title company location deadline' },
+      { path: 'job', select: 'title company location deadline postedBy' },
       { path: 'student', select: 'name email' }
     ]);
+
+    // Send notification to recruiter about new application
+    try {
+      await createJobApplicationNotification({
+        jobId: job._id,
+        applicationId: application._id,
+        applicantId: studentId,
+        recruiterId: job.postedBy,
+        jobTitle: job.title,
+        applicantName: req.user.name
+      });
+      console.log(`📢 Application notification sent for: ${job.title}`);
+    } catch (notificationError) {
+      console.error('Error sending application notification:', notificationError);
+      // Don't fail the application if notification fails
+    }
 
     res.status(201).json({
       success: true,
