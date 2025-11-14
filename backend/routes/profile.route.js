@@ -6,6 +6,7 @@ const {
   uploadResume,
   setDefaultResume,
   deleteResume,
+  downloadResume,
   toggleFollow,
   analyzeResume,
   upload
@@ -29,6 +30,7 @@ router.post('/upload-picture', upload.single('profilePicture'), uploadProfilePic
 router.post('/upload-resume', upload.single('resume'), uploadResume);
 router.put('/resume/:resumeId/default', setDefaultResume);
 router.delete('/resume/:resumeId', deleteResume);
+router.get('/resume/:resumeId/download', downloadResume);
 
 // Social features
 router.post('/follow/:targetUserId', toggleFollow);

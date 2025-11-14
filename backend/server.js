@@ -10,6 +10,7 @@ const jobRoutes = require('./routes/job.route');
 const applicationRoutes = require('./routes/application.route');
 const aiRoutes = require('./routes/ai.route');
 const profileRoutes = require('./routes/profile.route');
+const usersRoutes = require('./routes/users.route');
 
 // middleware
 app.use(cors());
@@ -25,6 +26,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/users', usersRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World');

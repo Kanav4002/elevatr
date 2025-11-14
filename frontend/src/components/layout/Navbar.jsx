@@ -113,6 +113,13 @@ const Navbar = () => {
                   )}
                   
                   <Link 
+                    to="/members" 
+                    className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition duration-200"
+                  >
+                    Members
+                  </Link>
+
+                  <Link 
                     to="/messages" 
                     className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition duration-200"
                   >
@@ -340,6 +347,14 @@ const Navbar = () => {
                   </Link>
                 )}
                 
+                <Link 
+                  to="/members" 
+                  className="mobile-menu-link"
+                  onClick={closeMobileMenu}
+                >
+                  Members
+                </Link>
+
                 <Link 
                   to="/messages" 
                   className="mobile-menu-link"

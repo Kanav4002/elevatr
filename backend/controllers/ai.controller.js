@@ -35,8 +35,8 @@ const generateInterviewQuestions = async (req, res) => {
       try {
         console.log('🤖 Trying AI...');
         
-        // Try different models in order of preference (using working models)
-        const modelNames = ['gemini-2.0-flash-exp', 'gemini-flash-latest'];
+        // Use only available models (checked via script)
+        const modelNames = ['gemini-flash-latest'];
         let model = null;
         
         for (const modelName of modelNames) {

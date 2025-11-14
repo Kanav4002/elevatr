@@ -79,6 +79,9 @@ export const profileAPI = {
   }),
   setDefaultResume: (resumeId) => api.put(`/profile/resume/${resumeId}/default`),
   deleteResume: (resumeId) => api.delete(`/profile/resume/${resumeId}`),
+  downloadResume: (resumeId) => api.get(`/profile/resume/${resumeId}/download`, {
+    responseType: 'blob' // Important for file downloads
+  }),
   toggleFollow: (targetUserId) => api.post(`/profile/follow/${targetUserId}`),
   analyzeResume: (data) => api.post('/profile/analyze-resume', data)
 };

@@ -17,6 +17,7 @@ import EditProject from './components/projects/EditProject';
 import ProjectsBrowse from './components/projects/ProjectsBrowse';
 import ProjectDetail from './components/projects/ProjectDetail';
 import Profile from './pages/Profile';
+import Members from './pages/Members';
 import Layout from './components/Layout';
 import './App.css';
 import './index.css';
@@ -107,6 +108,12 @@ function App() {
           <Route path="jobs/:jobId/edit" element={
             <ProtectedRoute>
               <EditJob />
+            </ProtectedRoute>
+          } />
+
+          <Route path="members" element={
+            <ProtectedRoute>
+              <Members />
             </ProtectedRoute>
           } />
 
