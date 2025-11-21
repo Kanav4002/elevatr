@@ -8,4 +8,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  // Allow Render's hostname when running via `vite preview`
+  preview: {
+    allowedHosts: ['elevatr-frontend.onrender.com'],
+  },
 })

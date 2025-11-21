@@ -23,7 +23,9 @@ export const NotificationProvider = ({ children }) => {
   // Initialize socket connection
   useEffect(() => {
     if (isAuthenticated() && user?.id) {
-      const newSocket = io('http://localhost:4000');
+      const SOCKET_URL =
+        import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
+      const newSocket = io(SOCKET_URL);
       
       newSocket.on('connect', () => {
         console.log('🔌 Connected to notification server');

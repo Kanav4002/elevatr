@@ -5,7 +5,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
-const PORT = 4000 || process.env.PORT;
+// Use Render's PORT in production, fallback to 4000 for local dev
+const PORT = process.env.PORT || 4000;
 const connectDB = require('./config/connectDB');
 const authRoutes = require('./routes/auth.route');
 const projectRoutes = require('./routes/project.route');
@@ -19,7 +20,9 @@ const notificationRoutes = require('./routes/notification.route');
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: [
+      process.env.CLIENT_URL || 'http://localhost:5173'
+    ],
     methods: ["GET", "POST"]
   }
 });
@@ -52,7 +55,14 @@ global.io = io;
 global.connectedUsers = connectedUsers;
 
 // middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      process.env.CLIENT_URL || 'http://localhost:5173'
+    ],
+    credentials: true
+  })
+);
 app.use(express.json());
 
 // Serve static files (uploaded files)

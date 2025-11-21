@@ -1,7 +1,9 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:4000/api';
+// Use env var in production, fallback to local dev URL
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 // Create axios instance
 const api = axios.create({
