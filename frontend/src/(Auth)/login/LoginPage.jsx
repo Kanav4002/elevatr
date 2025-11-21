@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api';
 
 const LoginPage = () => { // Changed from RegisterPage to LoginPage
   const [email, setEmail] = useState(''); // Removed name and role - not needed for login
@@ -17,10 +17,11 @@ const LoginPage = () => { // Changed from RegisterPage to LoginPage
         email,
         password // Only email and password for login
       };
-  
-      const res = await axios.post("http://localhost:4000/api/auth/login", payload); // Changed to login endpoint
 
-      if(res.status === 200) { // Login returns 200, not 201
+      // Use shared API client with correct base URL
+      const res = await authAPI.login(payload);
+
+      if (res.status === 200) { // Login returns 200, not 201
         console.log('Login successful: ', res.data);
         
         // Use AuthContext login function 
