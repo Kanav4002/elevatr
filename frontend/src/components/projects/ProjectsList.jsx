@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { projectAPI } from '../../services/api';
 
 const ProjectsList = () => {
   const [projects, setProjects] = useState([]);
@@ -12,20 +13,9 @@ const ProjectsList = () => {
 
   const fetchMyProjects = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/projects/my', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setProjects(data.projects);
-      } else {
-        setError(data.message || 'Failed to fetch projects');
-      }
+      const response = await projectAPI.getMyProjects();
+      const data = response.data;
+      setProjects(data.projects || []);
     } catch (err) {
       console.error('Error fetching projects:', err);
       setError('Failed to fetch projects');
@@ -40,22 +30,9 @@ const ProjectsList = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:4000/api/projects/${projectId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        // Remove project from state
-        setProjects(projects.filter(project => project._id !== projectId));
-        alert('Project deleted successfully!');
-      } else {
-        const data = await response.json();
-        alert('Error: ' + data.message);
-      }
+      await projectAPI.deleteProject(projectId);
+      setProjects(projects.filter(project => project._id !== projectId));
+      alert('Project deleted successfully!');
     } catch (error) {
       console.error('Error deleting project:', error);
       alert('Failed to delete project');

@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
+// Backend base URL for profile pictures
+const ASSET_BASE_URL =
+  import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
+
 const Members = () => {
   const { user } = useAuth();
   const [members, setMembers] = useState([]);
@@ -119,7 +123,7 @@ const Members = () => {
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl font-bold">
                   {member.profilePicture ? (
                     <img 
-                      src={`http://localhost:4000${member.profilePicture}`}
+                      src={`${ASSET_BASE_URL}${member.profilePicture}`}
                       alt={member.name}
                       className="w-16 h-16 rounded-full object-cover"
                     />

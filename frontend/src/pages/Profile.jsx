@@ -3,6 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import { useParams } from 'react-router-dom';
 import { profileAPI } from '../services/api';
 
+// Backend base URL for assets like profile pictures
+const ASSET_BASE_URL =
+  import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
+
 const Profile = () => {
   const { user } = useAuth();
   const { userId } = useParams();
@@ -436,7 +440,7 @@ const Profile = () => {
               <div className="relative">
                 {profileData.profilePicture ? (
                   <img 
-                    src={`http://localhost:4000${profileData.profilePicture}`}
+                    src={`${ASSET_BASE_URL}${profileData.profilePicture}`}
                     alt={profileData.name}
                     className="w-32 h-32 rounded-full object-cover"
                   />

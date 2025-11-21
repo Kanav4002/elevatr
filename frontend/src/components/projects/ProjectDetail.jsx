@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { projectAPI } from '../../services/api';
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -24,23 +25,8 @@ const ProjectDetail = () => {
       setLoading(true);
       setError('');
       
-      const token = localStorage.getItem('token');
-      
-      const response = await fetch(`http://localhost:4000/api/projects/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Project not found');
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const response = await projectAPI.getProject(id);
+      const data = response.data;
 
       if (data.success && data.project) {
         setProject(data.project);
@@ -63,28 +49,18 @@ const ProjectDetail = () => {
 
   const fetchRelatedProjects = async (techStack, currentProjectId) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      const response = await fetch(`http://localhost:4000/api/projects`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.projects) {
-          const related = data.projects
-            .filter(p => p._id !== currentProjectId && p.isPublic)
-            .filter(p => {
-              if (!p.techStack || !Array.isArray(p.techStack)) return false;
-              return p.techStack.some(tech => techStack.includes(tech));
-            })
-            .slice(0, 3);
-          
-          setRelatedProjects(related);
-        }
+      const response = await projectAPI.getAllProjects();
+      const data = response.data;
+      if (data.success && data.projects) {
+        const related = data.projects
+          .filter(p => p._id !== currentProjectId && p.isPublic)
+          .filter(p => {
+            if (!p.techStack || !Array.isArray(p.techStack)) return false;
+            return p.techStack.some(tech => techStack.includes(tech));
+          })
+          .slice(0, 3);
+        
+        setRelatedProjects(related);
       }
     } catch (error) {
       console.error('Error fetching related projects:', error);

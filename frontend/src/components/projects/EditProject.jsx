@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { projectAPI } from '../../services/api';
 
 const EditProject = () => {
   const navigate = useNavigate();
@@ -22,16 +23,10 @@ const EditProject = () => {
 
   const fetchProject = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:4000/api/projects/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await projectAPI.getProject(id);
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200 && data.project) {
         const project = data.project;
         setFormData({
           title: project.title,
@@ -63,23 +58,13 @@ const EditProject = () => {
     };
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:4000/api/projects/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(projectData)
-      });
+      const response = await projectAPI.updateProject(id, projectData);
 
-      const result = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200) {
         alert('Project updated successfully!');
         navigate('/projects/my'); // Go back to projects list
       } else {
-        alert('Error: ' + result.message);
+        alert('Error updating project');
       }
     } catch (error) {
       console.error('Error updating project:', error);

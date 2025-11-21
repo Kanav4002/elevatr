@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import { authAPI } from '../../services/api';
 
 const RegisterPage = () => {
   const [name, setName] = useState('')
@@ -22,7 +21,7 @@ const RegisterPage = () => {
         role,
       };
   
-      const res = await axios.post("http://localhost:4000/api/auth/register", payload);
+      const res = await authAPI.register(payload);
 
       if(res.status === 201) {
         console.log('Registration successful: ', res.data);

@@ -43,14 +43,8 @@ export const applicationAPI = {
 };
 
 export const projectAPI = {
-  // ✅ AVOID: Don't use /projects/me since it's causing ObjectId errors
-  // getMyProjects: () => api.get('/projects/me'),
-  
-  // ✅ USE: Get all projects and filter on frontend
   getAllProjects: (params) => api.get('/projects', { params }),
-  
-  // ✅ ALTERNATIVE: If your backend supports user-specific queries
-  getProjectsByUser: (userId) => api.get(`/projects?author=${userId}`),
+  getMyProjects: () => api.get('/projects/my'),
   
   getProject: (id) => api.get(`/projects/${id}`),
   createProject: (data) => api.post('/projects', data),

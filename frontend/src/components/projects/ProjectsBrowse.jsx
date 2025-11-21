@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { projectAPI } from '../../services/api';
 
 const ProjectsBrowse = () => {
   const [projects, setProjects] = useState([]);
@@ -16,21 +17,8 @@ const ProjectsBrowse = () => {
     try {
       setLoading(true);
       setError('');
-      
-      const token = localStorage.getItem('token');
-      
-      const response = await fetch('http://localhost:4000/api/projects', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      const data = await response.json();
+      const response = await projectAPI.getAllProjects();
+      const data = response.data;
       
       let projectsArray = [];
       

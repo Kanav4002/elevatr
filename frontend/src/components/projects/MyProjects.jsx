@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { projectAPI } from '../../services/api';
 
 const MyProjects = () => {
   const { user } = useAuth();
@@ -26,25 +27,10 @@ const MyProjects = () => {
       let allProjects = [];
   
       try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await fetch('http://localhost:4000/api/projects/my', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-  
-          if (response.ok) {
-            const data = await response.json();
-            allProjects = data.projects || [];
-          } else {
-            throw new Error('Backend fetch failed');
-          }
-        } else {
-          throw new Error('No token available');
-        }
-      } catch {  // <- Remove "backendError" parameter
+        const response = await projectAPI.getMyProjects();
+        const data = response.data;
+        allProjects = data.projects || [];
+      } catch {
         const savedProjects = JSON.parse(localStorage.getItem('userProjects') || '[]');
         allProjects = savedProjects.filter(project => 
           project.userId === currentUserId
@@ -68,19 +54,10 @@ const MyProjects = () => {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          await fetch(`http://localhost:4000/api/projects/${projectId}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-        } catch {
-          // Backend error, continue with localStorage
-        }
+      try {
+        await projectAPI.deleteProject(projectId);
+      } catch {
+        // Backend error, continue with localStorage
       }
 
       const savedProjects = JSON.parse(localStorage.getItem('userProjects') || '[]');

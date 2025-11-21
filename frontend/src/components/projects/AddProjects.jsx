@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext'; // ADD THIS IMPORT
+import { projectAPI } from '../../services/api';
 
 const AddProject = () => {
   const navigate = useNavigate();
@@ -56,25 +57,9 @@ const AddProject = () => {
       let projectSaved = false;
       
       try {
-        // Try to save to backend
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await fetch('http://localhost:4000/api/projects', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(projectData)
-          });
-  
-          if (response.ok) {
-            console.log('✅ Project saved to backend successfully');
-            projectSaved = true;
-          } else {
-            throw new Error('Backend save failed');
-          }
-        }
+        await projectAPI.createProject(projectData);
+        console.log('✅ Project saved to backend successfully');
+        projectSaved = true;
       } catch (backendError) {
         console.log('⚠️ Backend not available, using localStorage fallback');
         console.log('Backend error:', backendError.message);
