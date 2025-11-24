@@ -5,7 +5,7 @@ import { applicationAPI, projectAPI } from '../services/api';
 
 const HomePage = () => {
   const { user, isAuthenticated } = useAuth();
-  
+
   const [stats, setStats] = useState({
     applications: 0,
     projects: 0,
@@ -20,151 +20,151 @@ const HomePage = () => {
     }
   }, [isAuthenticated, user]);
 
-// ✅ ENHANCED: Better project fetching with more debugging
-const fetchUserStats = async () => {
-  try {
-    setLoading(true);
-    
-    if (user?.role === 'student') {
-      let applications = [];
-      let projects = [];
-      
-      // ✅ Fetch applications safely
-      try {
-        const appResponse = await applicationAPI.getMyApplications();
-        applications = appResponse.data.applications || appResponse.data || [];
-        console.log('✅ Applications fetched:', applications.length);
-      } catch (error) {
-        console.log('❌ Applications not available:', error.message);
-      }
-      
-      // ✅ DEBUGGING: Better project fetching
-      try {
-        console.log('📡 Trying /projects (all projects)...');
-        const allProjectsResponse = await projectAPI.getAllProjects();
-        console.log('📦 Full API response:', allProjectsResponse.data);
-        
-        const allProjects = allProjectsResponse.data.projects || allProjectsResponse.data || [];
-        console.log('📋 All projects count:', allProjects.length);
-        
-        if (Array.isArray(allProjects) && allProjects.length > 0) {
-          const userId = user._id || user.id;
-          console.log('🔍 Looking for projects by user ID:', userId);
-          
-          // ✅ LOG FIRST 2 PROJECTS COMPLETELY
-          console.log('📄 First project full structure:');
-          console.log(JSON.stringify(allProjects[0], null, 2));
-          if (allProjects.length > 1) {
-            console.log('📄 Second project full structure:');
-            console.log(JSON.stringify(allProjects[1], null, 2));
-          }
-          
-          // ✅ TEMPORARY: Assign ALL projects to user for testing
-          console.log('🧪 TESTING: Assigning all projects to current user for debugging');
-          projects = allProjects; // Temporarily assign all projects
-          
-          console.log('✅ TEMP: All projects assigned to user:', projects.length);
-          
-        } else {
-          console.log('⚠️ No projects returned from API');
-        }
-        
-      } catch (error) {
-        console.log('❌ Projects endpoint failed:', error.message);
-        projects = [];
-      }
-      
-      // ✅ FORCE UPDATE: Set stats with detailed logging
-      const newStats = {
-        applications: Array.isArray(applications) ? applications.length : 0,
-        projects: Array.isArray(projects) ? projects.length : 0,
-        messages: 0
-      };
-      
-      console.log('📊 BEFORE setState - Current stats:', stats);
-      console.log('📊 SETTING new stats:', newStats);
-      
-      setStats(newStats);
-      
-      // ✅ Force re-render by updating key
-      console.log('🔄 Stats should update now...');
-      
-      // Give React time to update
-      setTimeout(() => {
-        console.log('📊 AFTER setState - Stats should be:', newStats);
-        console.log('📊 Actual stats state:', stats);
-      }, 100);
+  // ✅ ENHANCED: Better project fetching with more debugging
+  const fetchUserStats = async () => {
+    try {
+      setLoading(true);
 
-      // ✅ Create recent activity
-      const activities = [];
-      
-      // Add application activities
-      if (Array.isArray(applications) && applications.length > 0) {
-        applications.slice(0, 2).forEach(app => {
-          activities.push({
-            type: 'application',
-            message: `Applied to ${app.job?.title || 'a position'} at ${app.job?.company || 'a company'}`,
-            status: app.status || 'pending',
-            timestamp: app.createdAt || app.appliedAt
+      if (user?.role === 'student') {
+        let applications = [];
+        let projects = [];
+
+        // ✅ Fetch applications safely
+        try {
+          const appResponse = await applicationAPI.getMyApplications();
+          applications = appResponse.data.applications || appResponse.data || [];
+          console.log('✅ Applications fetched:', applications.length);
+        } catch (error) {
+          console.log('❌ Applications not available:', error.message);
+        }
+
+        // ✅ DEBUGGING: Better project fetching
+        try {
+          console.log('📡 Trying /projects (all projects)...');
+          const allProjectsResponse = await projectAPI.getAllProjects();
+          console.log('📦 Full API response:', allProjectsResponse.data);
+
+          const allProjects = allProjectsResponse.data.projects || allProjectsResponse.data || [];
+          console.log('📋 All projects count:', allProjects.length);
+
+          if (Array.isArray(allProjects) && allProjects.length > 0) {
+            const userId = user._id || user.id;
+            console.log('🔍 Looking for projects by user ID:', userId);
+
+            // ✅ LOG FIRST 2 PROJECTS COMPLETELY
+            console.log('📄 First project full structure:');
+            console.log(JSON.stringify(allProjects[0], null, 2));
+            if (allProjects.length > 1) {
+              console.log('📄 Second project full structure:');
+              console.log(JSON.stringify(allProjects[1], null, 2));
+            }
+
+            // ✅ TEMPORARY: Assign ALL projects to user for testing
+            console.log('🧪 TESTING: Assigning all projects to current user for debugging');
+            projects = allProjects; // Temporarily assign all projects
+
+            console.log('✅ TEMP: All projects assigned to user:', projects.length);
+
+          } else {
+            console.log('⚠️ No projects returned from API');
+          }
+
+        } catch (error) {
+          console.log('❌ Projects endpoint failed:', error.message);
+          projects = [];
+        }
+
+        // ✅ FORCE UPDATE: Set stats with detailed logging
+        const newStats = {
+          applications: Array.isArray(applications) ? applications.length : 0,
+          projects: Array.isArray(projects) ? projects.length : 0,
+          messages: 0
+        };
+
+        console.log('📊 BEFORE setState - Current stats:', stats);
+        console.log('📊 SETTING new stats:', newStats);
+
+        setStats(newStats);
+
+        // ✅ Force re-render by updating key
+        console.log('🔄 Stats should update now...');
+
+        // Give React time to update
+        setTimeout(() => {
+          console.log('📊 AFTER setState - Stats should be:', newStats);
+          console.log('📊 Actual stats state:', stats);
+        }, 100);
+
+        // ✅ Create recent activity
+        const activities = [];
+
+        // Add application activities
+        if (Array.isArray(applications) && applications.length > 0) {
+          applications.slice(0, 2).forEach(app => {
+            activities.push({
+              type: 'application',
+              message: `Applied to ${app.job?.title || 'a position'} at ${app.job?.company || 'a company'}`,
+              status: app.status || 'pending',
+              timestamp: app.createdAt || app.appliedAt
+            });
           });
-        });
-      }
-      
-      // Add project activities
-      if (Array.isArray(projects) && projects.length > 0) {
-        projects.slice(0, 2).forEach(project => {
-          activities.push({
-            type: 'project',
-            message: `Created project "${project.title || project.name || 'Untitled'}"`,
-            status: 'created',
-            timestamp: project.createdAt
+        }
+
+        // Add project activities
+        if (Array.isArray(projects) && projects.length > 0) {
+          projects.slice(0, 2).forEach(project => {
+            activities.push({
+              type: 'project',
+              message: `Created project "${project.title || project.name || 'Untitled'}"`,
+              status: 'created',
+              timestamp: project.createdAt
+            });
           });
+        }
+
+        // Add welcome message
+        if (activities.length <= 2) { // Only applications, no projects
+          activities.push({
+            type: 'general',
+            message: `Welcome ${user.name}! You have ${projects.length} projects to showcase.`,
+            timestamp: user.createdAt || new Date().toISOString()
+          });
+        }
+
+        // Sort by timestamp and take top 4
+        activities.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+        setRecentActivity(activities.slice(0, 4));
+
+        console.log('✅ Recent activity set:', activities);
+
+      } else {
+        // Recruiter default stats
+        setStats({
+          applications: 0,
+          projects: 0,
+          messages: 0
         });
-      }
-      
-      // Add welcome message
-      if (activities.length <= 2) { // Only applications, no projects
-        activities.push({
+
+        setRecentActivity([{
           type: 'general',
-          message: `Welcome ${user.name}! You have ${projects.length} projects to showcase.`,
-          timestamp: user.createdAt || new Date().toISOString()
-        });
+          message: 'Welcome to your recruiter dashboard',
+          timestamp: new Date().toISOString()
+        }]);
       }
-      
-      // Sort by timestamp and take top 4
-      activities.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-      setRecentActivity(activities.slice(0, 4));
-      
-      console.log('✅ Recent activity set:', activities);
-      
-    } else {
-      // Recruiter default stats
-      setStats({
-        applications: 0,
-        projects: 0,
-        messages: 0
-      });
-      
+
+    } catch (error) {
+      console.error('❌ Error fetching user stats:', error);
+      setStats({ applications: 0, projects: 0, messages: 0 });
       setRecentActivity([{
         type: 'general',
-        message: 'Welcome to your recruiter dashboard',
+        message: 'Welcome to Elevatr!',
         timestamp: new Date().toISOString()
       }]);
+    } finally {
+      console.log('🏁 fetchUserStats completed');
+      setLoading(false);
     }
-    
-  } catch (error) {
-    console.error('❌ Error fetching user stats:', error);
-    setStats({ applications: 0, projects: 0, messages: 0 });
-    setRecentActivity([{
-      type: 'general',
-      message: 'Welcome to Elevatr!',
-      timestamp: new Date().toISOString()
-    }]);
-  } finally {
-    console.log('🏁 fetchUserStats completed');
-    setLoading(false);
-  }
-};
+  };
 
   if (!isAuthenticated()) {
     return <LandingPage />;
@@ -182,11 +182,11 @@ const fetchUserStats = async () => {
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return 'Recently';
-    
+
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now - time) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -207,7 +207,7 @@ const fetchUserStats = async () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+
         {/* Welcome Header */}
         <div className="mb-8">
           <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-8">
@@ -218,7 +218,7 @@ const fetchUserStats = async () => {
                     {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </span>
                 </div>
-                
+
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                     {getGreeting()}, {firstName}! 👋
@@ -386,7 +386,7 @@ const fetchUserStats = async () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Your Activity</h2>
-              
+
               {loading ? (
                 <div className="flex justify-center items-center h-24">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -399,14 +399,14 @@ const fetchUserStats = async () => {
                       {user?.role === 'student' ? 'Projects' : 'Job Posts'}
                     </div>
                   </div>
-                  
+
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">{stats.applications}</div>
                     <div className="text-sm text-gray-600">
                       {user?.role === 'student' ? 'Applications' : 'Applications Received'}
                     </div>
                   </div>
-                  
+
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
                     <div className="text-2xl font-bold text-purple-600">{stats.messages}</div>
                     <div className="text-sm text-gray-600">Messages</div>
@@ -457,8 +457,8 @@ const fetchUserStats = async () => {
                 {user?.role === 'student' ? '💡 Pro Tip for Students' : '💼 Tip for Recruiters'}
               </h3>
               <p className="text-blue-100">
-                {user?.role === 'student' 
-                  ? stats.projects > 0 
+                {user?.role === 'student'
+                  ? stats.projects > 0
                     ? `Great job on your ${stats.projects} project${stats.projects !== 1 ? 's' : ''}! ${stats.applications > 0 ? 'Keep applying to more positions and' : 'Start applying to jobs and'} showcase your work to attract recruiters.`
                     : 'Start by adding your first project! Showcase your best work with detailed descriptions, GitHub links, and live demos to attract recruiters.'
                   : 'Browse student projects to discover hidden talent! Look for creativity, technical skills, and passion in their work.'
@@ -499,37 +499,283 @@ const fetchUserStats = async () => {
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="text-center text-white">
-          <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
-            Welcome to <span className="text-blue-200">Elevatr</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-blue-100 max-w-4xl mx-auto mb-12 leading-relaxed">
-            The premier platform connecting talented students with exceptional career opportunities.
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+          <div className="text-center">
+            {/* Badge */}
+            <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-8 animate-fade-in-down">
+              <svg className="w-4 h-4 mr-2 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              Trusted by 5000+ Students & 500+ Companies
+            </div>
+
+            {/* Main Heading */}
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-white mb-8 leading-tight animate-fade-in">
+              Elevate Your
+              <span className="block bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 bg-clip-text text-transparent">
+                Career Journey
+              </span>
+            </h1>
+
+            <p className="text-xl md:text-2xl text-blue-100 max-w-4xl mx-auto mb-12 leading-relaxed animate-fade-in-up">
+              Connect with opportunities, showcase your projects, and build your future.
+              Join the premier platform where talent meets opportunity.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in-up animation-delay-200">
+              <Link
+                to="/register"
+                className="group inline-flex items-center justify-center px-10 py-5 bg-white text-blue-600 font-bold text-xl rounded-2xl hover:bg-blue-50 transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 hover:scale-105"
+              >
+                Get Started Free
+                <svg className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+              <Link
+                to="/about"
+                className="inline-flex items-center justify-center px-10 py-5 border-2 border-white text-white font-bold text-xl rounded-2xl hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
+              >
+                Learn More
+              </Link>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="flex flex-wrap items-center justify-center gap-8 text-blue-100 text-sm">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2 text-green-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                100% Free Forever
+              </div>
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2 text-green-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                No Credit Card Required
+              </div>
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2 text-green-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Setup in 2 Minutes
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Wave Separator */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
+            <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Everything You Need to Succeed
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Powerful features designed to help you showcase your work and land your dream job
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="group relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full filter blur-3xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+              <div className="relative">
+                <div className="h-14 w-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <svg className="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">Project Portfolio</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Showcase your best work with stunning portfolios. Add GitHub links, live demos, and detailed descriptions.
+                </p>
+              </div>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="group relative bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200 rounded-full filter blur-3xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+              <div className="relative">
+                <div className="h-14 w-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <svg className="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2h8zM9 12l2 2 4-4" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">Job Opportunities</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Access exclusive internships and full-time positions from top companies actively seeking talent.
+                </p>
+              </div>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="group relative bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-200 rounded-full filter blur-3xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+              <div className="relative">
+                <div className="h-14 w-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <svg className="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">Network & Grow</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Connect with peers, mentors, and industry professionals to accelerate your career growth.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div className="transform hover:scale-105 transition-transform">
+              <div className="text-5xl md:text-6xl font-bold text-white mb-2">5000+</div>
+              <div className="text-xl text-blue-100">Active Students</div>
+            </div>
+            <div className="transform hover:scale-105 transition-transform">
+              <div className="text-5xl md:text-6xl font-bold text-white mb-2">500+</div>
+              <div className="text-xl text-blue-100">Partner Companies</div>
+            </div>
+            <div className="transform hover:scale-105 transition-transform">
+              <div className="text-5xl md:text-6xl font-bold text-white mb-2">10k+</div>
+              <div className="text-xl text-blue-100">Projects Showcased</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Ready to Start Your Journey?
+          </h2>
+          <p className="text-xl text-gray-600 mb-10 leading-relaxed">
+            Join thousands of students who have already found their dream opportunities.
+            Your future starts here.
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/register"
-              className="inline-flex items-center px-10 py-5 bg-white text-blue-600 font-bold text-xl rounded-xl hover:bg-blue-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              className="group inline-flex items-center justify-center px-10 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xl rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
             >
-              <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
               Get Started Free
+              <svg className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
             </Link>
             <Link
               to="/about"
-              className="inline-flex items-center px-10 py-5 border-2 border-white text-white font-bold text-xl rounded-xl hover:bg-white hover:text-blue-600 transition-all duration-200"
+              className="inline-flex items-center justify-center px-10 py-5 border-2 border-blue-600 text-blue-600 font-bold text-xl rounded-2xl hover:bg-blue-50 transition-all duration-300"
             >
               Learn More
             </Link>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Add custom animations to index.css */}
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fade-in-down {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes blob {
+          0%, 100% {
+            transform: translate(0, 0) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 1s ease-out;
+        }
+
+        .animate-fade-in-down {
+          animation: fade-in-down 1s ease-out;
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 1s ease-out;
+        }
+
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+
+        .animation-delay-200 {
+          animation-delay: 200ms;
+        }
+
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
     </div>
   );
 };
+
 
 export default HomePage;
