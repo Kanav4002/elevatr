@@ -31,8 +31,8 @@ const ProjectsList = () => {
 
     try {
       await projectAPI.deleteProject(projectId);
-      setProjects(projects.filter(project => project._id !== projectId));
-      alert('Project deleted successfully!');
+        setProjects(projects.filter(project => project._id !== projectId));
+        alert('Project deleted successfully!');
     } catch (error) {
       console.error('Error deleting project:', error);
       alert('Failed to delete project');

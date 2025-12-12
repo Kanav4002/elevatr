@@ -82,6 +82,15 @@ app.get('/', (req, res) => {
   res.send('Hello World');
 })
 
+// Health check endpoint for Docker
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+})
+
 connectDB().then(() => {
   server.listen(PORT, () => { 
     console.log(`🚀 Server is running on port http://localhost:${PORT}`)

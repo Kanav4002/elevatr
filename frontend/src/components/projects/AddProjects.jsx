@@ -58,8 +58,8 @@ const AddProject = () => {
       
       try {
         await projectAPI.createProject(projectData);
-        console.log('✅ Project saved to backend successfully');
-        projectSaved = true;
+            console.log('✅ Project saved to backend successfully');
+            projectSaved = true;
       } catch (backendError) {
         console.log('⚠️ Backend not available, using localStorage fallback');
         console.log('Backend error:', backendError.message);

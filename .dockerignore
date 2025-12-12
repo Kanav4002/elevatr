@@ -1,0 +1,43 @@
+# Root level .dockerignore
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+docs
+*.md
+
+# Docker files
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# Logs
+logs
+*.log
+
+# Node modules (handled per service)
+node_modules
+
+# Build outputs
+dist
+build
+

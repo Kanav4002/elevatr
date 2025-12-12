@@ -51,16 +51,16 @@ const ProjectDetail = () => {
     try {
       const response = await projectAPI.getAllProjects();
       const data = response.data;
-      if (data.success && data.projects) {
-        const related = data.projects
-          .filter(p => p._id !== currentProjectId && p.isPublic)
-          .filter(p => {
-            if (!p.techStack || !Array.isArray(p.techStack)) return false;
-            return p.techStack.some(tech => techStack.includes(tech));
-          })
-          .slice(0, 3);
-        
-        setRelatedProjects(related);
+        if (data.success && data.projects) {
+          const related = data.projects
+            .filter(p => p._id !== currentProjectId && p.isPublic)
+            .filter(p => {
+              if (!p.techStack || !Array.isArray(p.techStack)) return false;
+              return p.techStack.some(tech => techStack.includes(tech));
+            })
+            .slice(0, 3);
+          
+          setRelatedProjects(related);
       }
     } catch (error) {
       console.error('Error fetching related projects:', error);

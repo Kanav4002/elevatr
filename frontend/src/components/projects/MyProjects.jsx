@@ -29,7 +29,7 @@ const MyProjects = () => {
       try {
         const response = await projectAPI.getMyProjects();
         const data = response.data;
-        allProjects = data.projects || [];
+            allProjects = data.projects || [];
       } catch {
         const savedProjects = JSON.parse(localStorage.getItem('userProjects') || '[]');
         allProjects = savedProjects.filter(project => 
@@ -54,10 +54,10 @@ const MyProjects = () => {
     try {
       setLoading(true);
 
-      try {
+        try {
         await projectAPI.deleteProject(projectId);
-      } catch {
-        // Backend error, continue with localStorage
+        } catch {
+          // Backend error, continue with localStorage
       }
 
       const savedProjects = JSON.parse(localStorage.getItem('userProjects') || '[]');
