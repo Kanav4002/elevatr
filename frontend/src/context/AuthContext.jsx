@@ -12,41 +12,45 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Only load user data from localStorage (cookie is handled by browser)
     const storedUser = localStorage.getItem('user');
     
-    if (storedToken && storedUser) {
-      setToken(storedToken);
+    if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     setLoading(false);
   }, []);
 
-  const login = (userData, userToken) => {
+  const login = (userData) => {
+    // No need to store token - it's in httpOnly cookie!
     setUser(userData);
-    setToken(userToken);
     localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', userToken);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Call backend to clear the httpOnly cookie
+    try {
+      await fetch(import.meta.env.VITE_API_URL?.replace('/api', '/api/auth/logout') || 'http://localhost:4000/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include' // Send cookie
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    
     setUser(null);
-    setToken(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('token');
   };
 
   const isAuthenticated = () => {
-    return !!(token && user);
+    return !!user; // Token is in cookie, just check if user exists
   };
 
   const value = {
     user,
-    token,
     login,
     logout,
     isAuthenticated,

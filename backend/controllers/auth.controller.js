@@ -35,13 +35,20 @@ const registerUser = async(req, res) => {
       { expiresIn: '24h'}
     );
 
-    res.cookie("token", token, { httpOnly: true, maxAge: 24*60*60*1000, secure: process.env.NODE_ENV === 'production' });
+    // Set httpOnly cookie (secure in production)
+    res.cookie("token", token, { 
+      httpOnly: true, 
+      maxAge: 24*60*60*1000,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // For cross-origin in production
+    });
 
     // Remove password from response
     const userResponse = user.toObject();
     delete userResponse.password;
 
-    res.status(201).json({ user: userResponse, message: "User created successfully", token: token });
+    // ✅ Don't send token in response body - it's in the cookie!
+    res.status(201).json({ user: userResponse, message: "User created successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message}); 
   }
@@ -75,15 +82,17 @@ const loginUser = async(req, res) => {
       { expiresIn: '24h' }
     );
     
+    // Set httpOnly cookie (secure in production)
     res.cookie("token", token, {
       httpOnly: true,
       maxAge: 24*60*60*1000, // 24 hours
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // For cross-origin in production
     });
 
+    // ✅ Don't send token in response body - it's in the cookie!
     res.status(200).json({
       message: "Login successful",
-      token: token,
       user: {
         id: user._id,
         name: user.name,
@@ -97,4 +106,19 @@ const loginUser = async(req, res) => {
   }
 }
 
-module.exports =  { registerUser, loginUser };
+const logoutUser = async(req, res) => {
+  try {
+    // Clear the httpOnly cookie
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    });
+
+    res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports =  { registerUser, loginUser, logoutUser };

@@ -2,14 +2,11 @@ const jwt = require('jsonwebtoken');
 
 const verifyAuth = async (req, res, next) => {
   try {
-    const authorization = req.headers.authorization;
-    if(!authorization) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
-    const token = authorization.split(" ")[1]; // Bearer <token>
+    // ✅ Get token from httpOnly cookie (not Authorization header)
+    const token = req.cookies?.token;
+    
     if (!token) {
-      return res.status(401).json({ message: "Invalid token format"});
+      return res.status(401).json({ message: "No token provided" });
     }
 
     // Verify token

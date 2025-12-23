@@ -22,7 +22,8 @@ const LoginPage = () => {
 
       if (res.status === 200) {
         console.log('Login successful: ', res.data);
-        login(res.data.user, res.data.token);
+        // Cookie is automatically set by browser from Set-Cookie header
+        login(res.data.user); // Only pass user data, not token
         navigate("/");
       }
     } catch (error) {

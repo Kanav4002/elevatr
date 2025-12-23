@@ -5,19 +5,13 @@ import axios from 'axios';
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
-// Create axios instance
+// Create axios instance with credentials enabled
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true, // ✅ Send cookies with every request
 });
 
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// No need for interceptor - cookies are sent automatically!
 
 // Job API
 export const jobAPI = {

@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { verifyAuth } = require('../middlewares/auth.middleware');
-const { registerUser, loginUser } = require('../controllers/auth.controller');
+const { registerUser, loginUser, logoutUser } = require('../controllers/auth.controller');
 
 // POST - /api/auth/register
 router.post('/register', registerUser);
 // POST - /api/auth/login
 router.post('/login', loginUser);
+// POST - /api/auth/logout
+router.post('/logout', logoutUser);
 
 // Protected routes
 router.get('/profile', verifyAuth, (req, res) => {
