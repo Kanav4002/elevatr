@@ -1,12 +1,14 @@
 require('dotenv').config();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 const Job = require('../models/job.model');
 
-let genAI;
+let groqClient;
 try {
-  if (process.env.GEMINI_API_KEY) {
-    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    console.log('✅ Gemini AI ready');
+  if (process.env.GROQ_API_KEY) {
+    groqClient = new Groq({
+      apiKey: process.env.GROQ_API_KEY
+    });
+    console.log('✅ Groq AI ready');
   }
 } catch (error) {
   console.error('❌ AI setup failed');
@@ -31,28 +33,11 @@ const generateInterviewQuestions = async (req, res) => {
     // Try AI first, but always have backup ready
     let questions = null;
     
-    if (genAI) {
+    if (groqClient) {
       try {
-        console.log('🤖 Trying AI...');
+        console.log('🤖 Using Groq AI for interview questions...');
+        console.log(`📋 Generating questions for: ${job.title} at ${job.company}`);
         
-        // Use only available models (checked via script)
-        const modelNames = ['gemini-flash-latest'];
-        let model = null;
-        
-        for (const modelName of modelNames) {
-          try {
-            model = genAI.getGenerativeModel({ model: modelName });
-            console.log(`✅ Using model: ${modelName}`);
-            break;
-          } catch (modelError) {
-            console.log(`⚠️ Model ${modelName} not available:`, modelError.message);
-            continue;
-          }
-        }
-        
-        if (!model) {
-          throw new Error('No available Gemini models found');
-        }
         const prompt = `Create interview questions for ${job.title} at ${job.company}. 
         
 Return ONLY this JSON (no other text):
@@ -62,12 +47,29 @@ Return ONLY this JSON (no other text):
   "situational": ["situation question 1", "situation question 2", "situation question 3", "situation question 4", "situation question 5"]
 }`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        console.log('🔄 Calling Groq API with model: llama-3.3-70b-versatile');
+        const startTime = Date.now();
+
+        const chatCompletion = await groqClient.chat.completions.create({
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          model: "llama-3.3-70b-versatile", // Using Llama 3.3 70B model
+          temperature: 0.7,
+          max_tokens: 2000,
+        });
+
+        const endTime = Date.now();
+        console.log(`✅ Groq API responded in ${endTime - startTime}ms`);
+
+        const text = chatCompletion.choices[0]?.message?.content;
         
         if (text && text.trim()) {
-          console.log('✅ AI responded');
+          console.log('✅ AI responded from Groq');
+          console.log(`📝 Response length: ${text.length} characters`);
           
           // Clean up the text
           let cleanText = text.trim();
@@ -84,7 +86,7 @@ Return ONLY this JSON (no other text):
           }
         }
       } catch (aiError) {
-        console.log('⚠️ AI failed:', aiError.message);
+        console.log('⚠️ Groq AI failed:', aiError.message);
         console.log('⚠️ AI error details:', {
           name: aiError.name,
           status: aiError.status,
@@ -92,6 +94,8 @@ Return ONLY this JSON (no other text):
           stack: aiError.stack?.split('\n')[0] // Just first line of stack
         });
       }
+    } else {
+      console.log('⚠️ Groq client not initialized - check GROQ_API_KEY');
     }
 
     // If AI didn't work, use backup questions
@@ -128,7 +132,7 @@ Return ONLY this JSON (no other text):
       questions,
       jobTitle: job.title,
       company: job.company,
-      source: questions ? (genAI ? 'ai' : 'backup') : 'backup'
+      source: questions ? (groqClient ? 'ai' : 'backup') : 'backup'
     });
 
   } catch (error) {

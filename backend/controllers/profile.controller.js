@@ -1,17 +1,21 @@
 const User = require('../models/user.model');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const pdfParse = require('pdf-parse');
 const { createFollowNotification } = require('./notification.controller');
 
 // Import AI functionality
 require('dotenv').config();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 
-let genAI;
+let groqClient;
 try {
-  if (process.env.GEMINI_API_KEY) {
-    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    console.log('✅ Gemini AI ready for ATS analysis');
+  if (process.env.GROQ_API_KEY) {
+    groqClient = new Groq({
+      apiKey: process.env.GROQ_API_KEY
+    });
+    console.log('✅ Groq AI ready for ATS analysis');
   }
 } catch (error) {
   console.error('❌ AI setup failed for ATS analysis');
@@ -432,7 +436,7 @@ const toggleFollow = async (req, res) => {
   }
 };
 
-// AI-Powered ATS Analysis using Gemini
+// AI-Powered ATS Analysis using Groq
 const analyzeResume = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -452,6 +456,25 @@ const analyzeResume = async (req, res) => {
       return res.status(404).json({ message: 'User profile not found' });
     }
 
+    // Find the selected resume and extract its text content
+    const resume = user.profile.resumes?.find(r => r._id.toString() === resumeId);
+    let resumeText = '';
+    if (resume && resume.filename) {
+      try {
+        const resumePath = path.join(__dirname, '..', 'uploads', resume.filename);
+        if (fs.existsSync(resumePath)) {
+          const pdfBuffer = fs.readFileSync(resumePath);
+          const pdfData = await pdfParse(pdfBuffer);
+          resumeText = pdfData.text || '';
+          console.log(`📄 Extracted ${resumeText.length} characters from resume PDF`);
+        } else {
+          console.log('⚠️ Resume file not found on disk, using profile data only');
+        }
+      } catch (pdfError) {
+        console.log('⚠️ Could not parse resume PDF:', pdfError.message);
+      }
+    }
+
     // Build user profile summary for AI analysis
     const profileSummary = {
       bio: user.profile.bio || 'No bio provided',
@@ -467,33 +490,18 @@ const analyzeResume = async (req, res) => {
     let analysis = null;
 
     // Try AI analysis first
-    if (genAI) {
+    if (groqClient) {
       try {
-        console.log('🤖 Using AI for ATS analysis...');
-        
-        // Use only available models (checked via script)
-        const modelNames = ['gemini-flash-latest'];
-        let model = null;
-        
-        for (const modelName of modelNames) {
-          try {
-            model = genAI.getGenerativeModel({ model: modelName });
-            console.log(`✅ Using model: ${modelName}`);
-            break;
-          } catch (modelError) {
-            console.log(`⚠️ Model ${modelName} not available:`, modelError.message);
-            continue;
-          }
-        }
-        
-        if (!model) {
-          throw new Error('No available Gemini models found');
-        }
+        console.log('🤖 Using Groq AI for ATS analysis...');
+        console.log('📊 Analyzing resume + profile against job description');
 
-        const prompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze how well this candidate's profile matches the job description.
+        const prompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze how well this candidate matches the job description based on their RESUME and PROFILE.
 
 JOB DESCRIPTION:
 ${jobDescription}
+
+CANDIDATE RESUME (extracted from PDF):
+${resumeText || 'No resume text available'}
 
 CANDIDATE PROFILE:
 Bio: ${profileSummary.bio}
@@ -505,6 +513,8 @@ ${profileSummary.experience}
 
 Education:
 ${profileSummary.education}
+
+IMPORTANT: Base your analysis primarily on the RESUME content above. The resume contains the actual keywords and skills the candidate has. Only use the profile data as supplementary info.
 
 Provide a detailed ATS analysis. Return ONLY this JSON format (no other text):
 {
@@ -530,12 +540,29 @@ Provide a detailed ATS analysis. Return ONLY this JSON format (no other text):
 
 Score should be 0-100 based on actual match quality. Be realistic and helpful.`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        console.log('🔄 Calling Groq API with model: llama-3.3-70b-versatile');
+        const startTime = Date.now();
+        
+        const chatCompletion = await groqClient.chat.completions.create({
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          model: "llama-3.3-70b-versatile", // Using Llama 3.3 70B model
+          temperature: 0.7,
+          max_tokens: 2000,
+        });
+
+        const endTime = Date.now();
+        console.log(`✅ Groq API responded in ${endTime - startTime}ms`);
+
+        const text = chatCompletion.choices[0]?.message?.content;
         
         if (text && text.trim()) {
-          console.log('✅ AI ATS analysis received');
+          console.log('✅ AI ATS analysis received from Groq');
+          console.log(`📝 Response length: ${text.length} characters`);
           
           // Clean up the text
           let cleanText = text.trim();
@@ -549,10 +576,11 @@ Score should be 0-100 based on actual match quality. Be realistic and helpful.`;
             const jsonText = cleanText.substring(start, end + 1);
             analysis = JSON.parse(jsonText);
             console.log('✅ AI ATS analysis parsed successfully');
+            console.log(`📊 Analysis score: ${analysis.score}/100`);
           }
         }
       } catch (aiError) {
-        console.log('⚠️ AI ATS analysis failed:', aiError.message);
+        console.log('⚠️ Groq AI ATS analysis failed:', aiError.message);
         console.log('⚠️ AI error details:', {
           name: aiError.name,
           status: aiError.status,
@@ -560,12 +588,14 @@ Score should be 0-100 based on actual match quality. Be realistic and helpful.`;
           stack: aiError.stack?.split('\n')[0]
         });
       }
+    } else {
+      console.log('⚠️ Groq client not initialized - check GROQ_API_KEY');
     }
 
     // Fallback analysis if AI fails
     if (!analysis) {
       console.log('🔄 Using fallback ATS analysis');
-      analysis = generateFallbackAnalysis(jobDescription, user.profile);
+      analysis = generateFallbackAnalysis(jobDescription, user.profile, resumeText);
     }
 
     // Ensure analysis has required fields
@@ -615,7 +645,7 @@ Score should be 0-100 based on actual match quality. Be realistic and helpful.`;
 };
 
 // Fallback analysis function when AI is not available
-const generateFallbackAnalysis = (jobDescription, profile) => {
+const generateFallbackAnalysis = (jobDescription, profile, resumeText = '') => {
   const jobText = jobDescription.toLowerCase();
   
   // Extract basic keywords
@@ -625,13 +655,14 @@ const generateFallbackAnalysis = (jobDescription, profile) => {
   const allKeywords = [...techKeywords, ...softSkills];
   const userSkills = profile.skills?.map(skill => skill.name.toLowerCase()) || [];
   const userExperience = profile.experience?.map(exp => `${exp.title} ${exp.description}`.toLowerCase()).join(' ') || '';
+  const resumeContent = resumeText.toLowerCase();
   
   const matchedKeywords = [];
   const missingKeywords = [];
   
   allKeywords.forEach(keyword => {
     if (jobText.includes(keyword)) {
-      const isMatched = userSkills.some(skill => skill.includes(keyword)) || userExperience.includes(keyword);
+      const isMatched = userSkills.some(skill => skill.includes(keyword)) || userExperience.includes(keyword) || resumeContent.includes(keyword);
       if (isMatched) {
         matchedKeywords.push(keyword);
       } else {
@@ -687,7 +718,7 @@ const downloadResume = async (req, res) => {
     const filePath = path.join(__dirname, '..', 'uploads', resume.filename);
     
     // Check if file exists
-    if (!require('fs').existsSync(filePath)) {
+    if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'Resume file not found on server' });
     }
 

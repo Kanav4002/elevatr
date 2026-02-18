@@ -1,28 +1,30 @@
 require('dotenv').config();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 const fs = require('fs');
 const path = require('path');
 
-async function checkAvailableModels() {
+async function checkGroqModels() {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      console.log('❌ No GEMINI_API_KEY found in environment');
+    if (!process.env.GROQ_API_KEY) {
+      console.log('❌ No GROQ_API_KEY found in environment');
       return;
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    console.log('🔍 Checking available Gemini models...\n');
+    const groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY
+    });
+    
+    console.log('🔍 Checking available Groq models...\n');
 
-    // List of models to test (ordered by preference)
+    // List of Groq models to test (ordered by preference)
     const modelsToTest = [
-      'gemini-2.0-flash-exp',      // Latest experimental
-      'gemini-1.5-pro',           // Most capable
-      'gemini-1.5-flash',         // Fast and efficient
-      'gemini-1.5-flash-latest',  // Latest flash
-      'gemini-flash-latest',      // Generic latest
-      'gemini-pro',               // Legacy pro
-      'gemini-1.0-pro',          // Legacy 1.0
-      'gemini-1.0-pro-latest'    // Legacy latest
+      'llama-3.3-70b-versatile',    // Latest Llama 3.3 70B - highly capable
+      'llama-3.1-70b-versatile',    // Llama 3.1 70B - very capable
+      'llama-3.2-90b-text-preview', // Llama 3.2 90B preview
+      'mixtral-8x7b-32768',         // Mixtral 8x7B - good performance
+      'llama-3.1-8b-instant',       // Llama 3.1 8B - fast
+      'gemma-7b-it',                // Gemma 7B
+      'gemma2-9b-it'                // Gemma 2 9B
     ];
 
     const availableModels = [];
@@ -32,12 +34,20 @@ async function checkAvailableModels() {
       try {
         console.log(`Testing ${modelName}...`);
         
-        const model = genAI.getGenerativeModel({ model: modelName });
-        
         // Try a simple test generation
-        const result = await model.generateContent('Hello, respond with just "OK"');
-        const response = await result.response;
-        const text = response.text();
+        const chatCompletion = await groq.chat.completions.create({
+          messages: [
+            {
+              role: "user",
+              content: 'Hello, respond with just "OK"'
+            }
+          ],
+          model: modelName,
+          temperature: 0.5,
+          max_tokens: 10,
+        });
+        
+        const text = chatCompletion.choices[0]?.message?.content;
         
         if (text && text.trim()) {
           console.log(`✅ ${modelName} - AVAILABLE (Response: ${text.trim()})`);
@@ -48,7 +58,7 @@ async function checkAvailableModels() {
         }
         
         // Add delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
         console.log(`❌ ${modelName} - ERROR: ${error.message}`);
@@ -56,11 +66,11 @@ async function checkAvailableModels() {
         
         // If we hit rate limits, wait longer
         if (error.status === 429) {
-          console.log('⏳ Rate limit hit, waiting 30 seconds...');
-          await new Promise(resolve => setTimeout(resolve, 30000));
+          console.log('⏳ Rate limit hit, waiting 10 seconds...');
+          await new Promise(resolve => setTimeout(resolve, 10000));
         } else {
           // Short delay for other errors
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
     }
@@ -69,15 +79,25 @@ async function checkAvailableModels() {
     console.log('==================');
     
     if (availableModels.length > 0) {
-      console.log('\n✅ AVAILABLE MODELS:');
+      console.log('\n✅ AVAILABLE GROQ MODELS:');
       availableModels.forEach(model => console.log(`  - ${model}`));
       
-      console.log('\n🔧 RECOMMENDED MODEL ORDER FOR CODE:');
-      const modelArrayCode = `const modelNames = [${availableModels.map(m => `'${m}'`).join(', ')}];`;
-      console.log(modelArrayCode);
+      console.log('\n🔧 RECOMMENDED MODEL FOR CODE:');
+      console.log(`  Primary: ${availableModels[0]}`);
       
-      // Auto-update controller files
-      await updateControllerFiles(availableModels);
+      // Save results to a JSON file for future reference
+      const resultsPath = path.join(__dirname, 'available-models.json');
+      const results = {
+        lastChecked: new Date().toISOString(),
+        provider: 'Groq',
+        availableModels,
+        recommendedModel: availableModels[0],
+        totalTested: modelsToTest.length,
+        status: availableModels.length > 0 ? 'success' : 'no_models_available'
+      };
+      
+      fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
+      console.log('\n📄 Saved results to available-models.json');
       
     } else {
       console.log('\n❌ NO MODELS AVAILABLE');
@@ -94,69 +114,8 @@ async function checkAvailableModels() {
   }
 }
 
-async function updateControllerFiles(availableModels) {
-  try {
-    console.log('\n🔄 Auto-updating controller files...');
-    
-    const modelArrayString = availableModels.map(m => `'${m}'`).join(', ');
-    
-    // Update AI controller
-    const aiControllerPath = path.join(__dirname, 'controllers', 'ai.controller.js');
-    if (fs.existsSync(aiControllerPath)) {
-      let aiContent = fs.readFileSync(aiControllerPath, 'utf8');
-      
-      // Replace the modelNames array
-      const aiUpdated = aiContent.replace(
-        /const modelNames = \[.*?\];/s,
-        `const modelNames = [${modelArrayString}];`
-      );
-      
-      if (aiUpdated !== aiContent) {
-        fs.writeFileSync(aiControllerPath, aiUpdated);
-        console.log('✅ Updated ai.controller.js');
-      } else {
-        console.log('ℹ️ ai.controller.js already up to date');
-      }
-    }
-    
-    // Update Profile controller
-    const profileControllerPath = path.join(__dirname, 'controllers', 'profile.controller.js');
-    if (fs.existsSync(profileControllerPath)) {
-      let profileContent = fs.readFileSync(profileControllerPath, 'utf8');
-      
-      // Replace the modelNames array
-      const profileUpdated = profileContent.replace(
-        /const modelNames = \[.*?\];/s,
-        `const modelNames = [${modelArrayString}];`
-      );
-      
-      if (profileUpdated !== profileContent) {
-        fs.writeFileSync(profileControllerPath, profileUpdated);
-        console.log('✅ Updated profile.controller.js');
-      } else {
-        console.log('ℹ️ profile.controller.js already up to date');
-      }
-    }
-    
-    // Save results to a JSON file for future reference
-    const resultsPath = path.join(__dirname, 'available-models.json');
-    const results = {
-      lastChecked: new Date().toISOString(),
-      availableModels,
-      totalTested: 8, // Total models tested
-      status: availableModels.length > 0 ? 'success' : 'no_models_available'
-    };
-    
-    fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
-    console.log('📄 Saved results to available-models.json');
-    
-  } catch (error) {
-    console.error('❌ Error updating controller files:', error.message);
-  }
-}
-
 // Run the check
-checkAvailableModels().then(() => {
+checkGroqModels().then(() => {
   console.log('\n🏁 Model check complete!');
   console.log('💡 Run "npm run check-models" to check again anytime');
   process.exit(0);
