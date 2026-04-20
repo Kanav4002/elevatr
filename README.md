@@ -53,14 +53,6 @@ Elevatr brings together project showcasing, job hunting, resume management, and 
 | Multer | File uploads |
 | bcrypt | Password hashing |
 
-### Infrastructure
-
-| Technology | Purpose |
-|---|---|
-| Docker + Docker Compose | Containerized deployment |
-| Nginx | Frontend static file serving |
-| MongoDB 7.0 | Database container |
-
 ---
 
 ## Project Structure
@@ -83,7 +75,6 @@ elevatr/
 │   ├── routes/            # Express route definitions
 │   ├── uploads/           # User-uploaded files (resumes, pictures)
 │   ├── server.js          # Entry point with Socket.io
-│   ├── Dockerfile
 │   └── package.json
 ├── frontend/
 │   ├── src/
@@ -94,10 +85,7 @@ elevatr/
 │   │   ├── services/      # API service layer (Axios)
 │   │   ├── App.jsx        # Root component with routing
 │   │   └── main.jsx       # Entry point
-│   ├── Dockerfile
-│   ├── nginx.conf
 │   └── package.json
-├── docker-compose.yml     # Full-stack orchestration
 └── README.md
 ```
 
@@ -150,25 +138,6 @@ npm run dev
 ```
 
 The app will be available at **http://localhost:5173**
-
----
-
-## Docker Deployment
-
-Run the entire stack with a single command:
-
-```bash
-# Set your Groq API key
-export GROQ_API_KEY=your_groq_api_key
-
-# Start all services
-docker compose up --build
-```
-
-This spins up:
-- **MongoDB** on port `27017`
-- **Backend API** on port `4000`
-- **Frontend** (Nginx) on port `5173`
 
 ---
 

@@ -91,7 +91,7 @@ app.get('/', (req, res) => {
   res.send('Hello World');
 })
 
-// Health check endpoint for Docker
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy', 
