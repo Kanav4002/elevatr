@@ -18,6 +18,7 @@ const profileRoutes = require('./routes/profile.route');
 const usersRoutes = require('./routes/users.route');
 const notificationRoutes = require('./routes/notification.route');
 const messageRoutes = require('./routes/message.route');
+const startKeepAlive = require('./keepAlive');
 
 // Accept a comma-separated list of origins so Vercel preview deploys (which
 // each get a unique URL) can be whitelisted alongside the production domain.
@@ -139,5 +140,7 @@ connectDB().then(() => {
   server.listen(PORT, () => { 
     console.log(`🚀 Server is running on port http://localhost:${PORT}`)
     console.log(`📡 Socket.io server ready for real-time notifications`)
+    // Prevent Render's free-tier 15m idle shutdown by self-pinging.
+    startKeepAlive();
   })
 }).catch((error) => { console.log(error)});
