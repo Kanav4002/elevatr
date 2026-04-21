@@ -154,4 +154,12 @@ temp/
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?mv frontend/.gitignore .gitignore
+*.sw?
+
+# User-uploaded content (profile pictures, resumes) — stored on disk in dev,
+# should live on external storage (S3/Cloudinary) or a Render Disk in prod.
+backend/uploads/
+!backend/uploads/.gitkeep
+
+# Build / dist
+frontend/dist/
