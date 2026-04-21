@@ -11,12 +11,14 @@ const {
   analyzeResume,
   upload
 } = require('../controllers/profile.controller');
-const { verifyAuth } = require('../middlewares/auth.middleware');
+const { verifyAuth, attachUserIfAuth } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
-// Public routes
-router.get('/user/:userId', getProfile); // Get specific user's profile
+// Public routes. /user/:userId uses the lenient variant so that logged-in
+// viewers get `isFollowing` computed against their id while unauthenticated
+// visitors can still see public profiles.
+router.get('/user/:userId', attachUserIfAuth, getProfile); // Get specific user's profile
 router.get('/me', verifyAuth, getProfile); // Get own profile (requires auth)
 
 // Protected routes

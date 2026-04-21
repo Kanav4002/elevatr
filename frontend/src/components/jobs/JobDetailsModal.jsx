@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { applicationAPI } from '../../services/api';
 import { isAfter, format } from 'date-fns';
@@ -9,14 +10,16 @@ const JobDetailsModal = ({ job, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isVisible, setIsVisible] = useState(false);
+  const [alreadyApplied, setAlreadyApplied] = useState(false);
+  const [checkingApplied, setCheckingApplied] = useState(false);
 
-  // Get user from localStorage (simple approach)
+  // Auth token now lives in an httpOnly cookie — presence of a cached user
+  // object is our best lightweight signal that the viewer is logged in.
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const token = localStorage.getItem('token');
-  
+
   const isDeadlinePassed = job?.deadline ? !isAfter(new Date(job.deadline), new Date()) : false;
   const isStudent = user?.role === 'student';
-  const isLoggedIn = !!token;
+  const isLoggedIn = Boolean(user && (user.id || user._id));
 
   // Animation effect
   useEffect(() => {
@@ -25,11 +28,39 @@ const JobDetailsModal = ({ job, onClose }) => {
       document.body.style.overflow = 'hidden';
       setTimeout(() => setIsVisible(true), 50);
     }
-    
+
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [job]);
+
+  // Detect whether the current student has already applied for this job so
+  // we can show an "Already Applied" state instead of the apply button.
+  useEffect(() => {
+    let cancelled = false;
+    setAlreadyApplied(false);
+    if (!job?._id || !isLoggedIn || !isStudent) return;
+    (async () => {
+      try {
+        setCheckingApplied(true);
+        const res = await applicationAPI.getMyApplications({ limit: 200 });
+        const apps = res.data?.applications || [];
+        const match = apps.some((a) => {
+          const jobId = a.job?._id || a.job;
+          return jobId?.toString() === job._id?.toString();
+        });
+        if (!cancelled) setAlreadyApplied(match);
+      } catch (err) {
+        // Non-fatal — fall back to allowing apply; server still enforces.
+        console.error('Could not check application status:', err);
+      } finally {
+        if (!cancelled) setCheckingApplied(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [job?._id, isLoggedIn, isStudent]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -45,6 +76,10 @@ const JobDetailsModal = ({ job, onClose }) => {
       setMessage({ type: 'error', text: 'Cover letter must be at least 50 characters long' });
       return;
     }
+    if (coverLetter.length > 5000) {
+      setMessage({ type: 'error', text: 'Cover letter cannot exceed 5000 characters' });
+      return;
+    }
 
     try {
       setLoading(true);
@@ -52,7 +87,8 @@ const JobDetailsModal = ({ job, onClose }) => {
       setMessage({ type: 'success', text: 'Application submitted successfully!' });
       setShowApplicationForm(false);
       setCoverLetter('');
-      
+      setAlreadyApplied(true);
+
       // Auto close success message after 3 seconds
       setTimeout(() => {
         setMessage({ type: '', text: '' });
@@ -315,6 +351,30 @@ const JobDetailsModal = ({ job, onClose }) => {
                 <p className="text-red-600 font-medium mb-2">Application Deadline Passed</p>
                 <p className="text-gray-600">This job posting is no longer accepting applications.</p>
               </div>
+            ) : alreadyApplied ? (
+              <div className="text-center p-6 bg-white rounded-xl border border-emerald-200">
+                <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="text-emerald-700 font-semibold text-lg mb-2">You've already applied</p>
+                <p className="text-gray-600 mb-5">Track the status of this application and others on your applications page.</p>
+                <Link
+                  to="/applications"
+                  onClick={handleClose}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl font-semibold shadow-sm transition-colors"
+                >
+                  View My Applications
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              </div>
+            ) : checkingApplied ? (
+              <div className="flex items-center justify-center p-6 bg-white rounded-xl border border-gray-200">
+                <div className="w-6 h-6 border-2 border-gray-200 border-t-emerald-600 rounded-full animate-spin" />
+              </div>
             ) : !showApplicationForm ? (
               <div className="text-center">
                 <button
@@ -339,14 +399,23 @@ const JobDetailsModal = ({ job, onClose }) => {
                     onChange={(e) => setCoverLetter(e.target.value)}
                     placeholder="Tell us why you're interested in this position and what makes you a great fit..."
                     rows={6}
+                    maxLength={5000}
                     className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-none"
                     required
                   />
                   <div className="flex justify-between items-center mt-2">
-                    <p className={`text-sm ${coverLetter.length >= 50 ? 'text-emerald-600' : 'text-gray-500'}`}>
-                      {coverLetter.length}/50 characters minimum
+                    <p
+                      className={`text-sm ${
+                        coverLetter.length > 5000
+                          ? 'text-red-600'
+                          : coverLetter.length >= 50
+                          ? 'text-emerald-600'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      {coverLetter.length}/5000 characters (min 50)
                     </p>
-                    {coverLetter.length >= 50 && (
+                    {coverLetter.length >= 50 && coverLetter.length <= 5000 && (
                       <span className="text-emerald-600 text-sm font-medium">✓ Ready to submit</span>
                     )}
                   </div>
@@ -355,7 +424,7 @@ const JobDetailsModal = ({ job, onClose }) => {
                 <div className="flex gap-4">
                   <button
                     type="submit"
-                    disabled={loading || coverLetter.length < 50}
+                    disabled={loading || coverLetter.length < 50 || coverLetter.length > 5000}
                     className="flex-1 py-4 px-6 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-2xl hover:from-emerald-700 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-400 transition-all duration-200 font-bold shadow-lg disabled:shadow-none disabled:transform-none transform hover:scale-105"
                   >
                     {loading ? (

@@ -24,15 +24,20 @@ import ProjectDetail from './components/projects/ProjectDetail';
 import Profile from './pages/Profile';
 import Members from './pages/Members';
 import Notifications from './pages/Notifications';
+import Messages from './pages/Messages';
+import Settings from './pages/Settings';
 import Layout from './components/Layout';
 import { NotificationProvider } from './context/NotificationContext';
+import { MessagesProvider } from './context/MessagesContext';
 import './App.css';
 import './index.css';
+
 
 function App() {
   return (
     <Router>
       <NotificationProvider>
+        <MessagesProvider>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<HomePage />} />
@@ -138,10 +143,7 @@ function App() {
 
             <Route path="messages" element={
               <ProtectedRoute>
-                <div className="p-8 text-center">
-                  <h1 className="text-2xl font-bold">Messages - Coming Soon!</h1>
-                  <p className="mt-4 text-gray-600">Direct messaging will be available here</p>
-                </div>
+                <Messages />
               </ProtectedRoute>
             } />
 
@@ -159,16 +161,14 @@ function App() {
 
             <Route path="settings" element={
               <ProtectedRoute>
-                <div className="p-8 text-center">
-                  <h1 className="text-2xl font-bold">Settings - Coming Soon!</h1>
-                  <p className="mt-4 text-gray-600">Account settings will be available here</p>
-                </div>
+                <Settings />
               </ProtectedRoute>
             } />
           </Route>
           {/* You can add routes without layout here if needed */}
           {/* <Route path="/admin" element={<AdminPage />} /> */}
         </Routes>
+        </MessagesProvider>
       </NotificationProvider>
     </Router>
   );

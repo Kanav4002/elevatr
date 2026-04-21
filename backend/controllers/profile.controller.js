@@ -100,13 +100,26 @@ const getProfile = async (req, res) => {
       await user.save();
     }
 
-    // Check if profile is public or if it's the user's own profile
-    const isOwnProfile = requestingUserId && requestingUserId === targetUserId;
+    // Normalize both ids to strings before comparing. `targetUserId` is a URL
+    // param (string), `requestingUserId` comes from the JWT payload and may be
+    // a plain string already.
+    const requestingIdStr = requestingUserId ? String(requestingUserId) : null;
+    const targetIdStr = String(targetUserId);
+    const isOwnProfile = !!requestingIdStr && requestingIdStr === targetIdStr;
     const isPublic = user.profile?.isPublic !== false;
 
     if (!isOwnProfile && !isPublic) {
       return res.status(403).json({ message: 'This profile is private' });
     }
+
+    // `profile.followers` is populated above, so each entry is a full User
+    // document — the previous `f.toString()` check returned `[object Object]`
+    // and never matched, which is why `isFollowing` kept flipping back to
+    // false on every refresh. Pull out `_id` explicitly before comparing.
+    const isFollowing = !!requestingIdStr && (user.profile?.followers || []).some((f) => {
+      const fid = f && typeof f === 'object' && f._id ? f._id : f;
+      return fid ? String(fid) === requestingIdStr : false;
+    });
 
     // Prepare response data
     const profileData = {
@@ -128,7 +141,7 @@ const getProfile = async (req, res) => {
         following: user.profile?.following || [],
         followersCount: user.profile?.followers?.length || 0,
         followingCount: user.profile?.following?.length || 0,
-        isFollowing: requestingUserId ? user.profile?.followers?.some(f => f.toString() === requestingUserId) : false
+        isFollowing,
       },
       // Only include private data for own profile
       ...(isOwnProfile && {

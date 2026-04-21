@@ -76,6 +76,24 @@ export const profileAPI = {
   analyzeResume: (data) => api.post('/profile/analyze-resume', data)
 };
 
+// Members / Users API
+export const userAPI = {
+  getMembers: (params) => api.get('/users/members', { params }),
+};
+
+// Messages / Chat API
+export const messageAPI = {
+  getConversations: () => api.get('/messages/conversations'),
+  startConversation: (userId) =>
+    api.post('/messages/conversations', { userId }),
+  getMessages: (conversationId, params) =>
+    api.get(`/messages/conversations/${conversationId}/messages`, { params }),
+  sendMessage: (conversationId, content) =>
+    api.post(`/messages/conversations/${conversationId}/messages`, { content }),
+  markRead: (conversationId) =>
+    api.put(`/messages/conversations/${conversationId}/read`),
+};
+
 // Notifications API
 export const notificationAPI = {
   getNotifications: (page = 1, limit = 20, unreadOnly = false) => 

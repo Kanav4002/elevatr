@@ -251,6 +251,94 @@ const createFollowNotification = async (followData) => {
   });
 };
 
+/*
+ * Helper: create a `message_received` notification for the recipient of a
+ * 1:1 chat message.
+ *
+ *  - Persists a Notification document so the bell count survives page
+ *    refreshes and is available across devices (satisfies "ensure persisted
+ *    in DB" requirement).
+ *  - Emits `newNotification` over socket.io so the bell updates in real time
+ *    on any active session belonging to the recipient — the NotificationContext
+ *    already listens for this exact event.
+ *  - Throttles: if the recipient already has an *unread* `message_received`
+ *    notification from the same sender created in the last 2 minutes, we
+ *    bump its `message` preview + `createdAt` in place instead of inserting
+ *    a new row. This keeps the bell from flooding during rapid back-and-forth
+ *    chat while still giving the recipient a single live-updating entry.
+ *  - No-ops if sender === recipient (edge case) or ids are missing.
+ */
+const MESSAGE_NOTIFICATION_THROTTLE_MS = 2 * 60 * 1000; // 2 minutes
+
+const createMessageNotification = async ({
+  senderId,
+  recipientId,
+  senderName,
+  preview,
+}) => {
+  if (!senderId || !recipientId) return null;
+  if (senderId.toString() === recipientId.toString()) return null;
+
+  const truncatedPreview =
+    preview && preview.length > 120 ? `${preview.slice(0, 117)}...` : preview || '';
+  const title = 'New Message';
+  const message = senderName
+    ? `${senderName}: ${truncatedPreview}`
+    : truncatedPreview || 'You received a new message';
+
+  try {
+    const recent = await Notification.findOne({
+      recipient: recipientId,
+      sender: senderId,
+      type: 'message_received',
+      read: false,
+      createdAt: { $gte: new Date(Date.now() - MESSAGE_NOTIFICATION_THROTTLE_MS) },
+    }).sort({ createdAt: -1 });
+
+    if (recent) {
+      // Update the in-flight notification in place so the bell shows the
+      // latest preview without a second unread row appearing.
+      recent.title = title;
+      recent.message = message;
+      recent.createdAt = new Date();
+      await recent.save();
+      await recent.populate('sender', 'name profile.profilePicture');
+
+      const io = global.io;
+      const connectedUsers = global.connectedUsers;
+      if (io && connectedUsers && connectedUsers.has(recipientId.toString())) {
+        const socketId = connectedUsers.get(recipientId.toString());
+        io.to(socketId).emit('newNotification', {
+          id: recent._id,
+          type: recent.type,
+          title: recent.title,
+          message: recent.message,
+          sender: recent.sender,
+          data: recent.data,
+          actionUrl: recent.actionUrl,
+          createdAt: recent.createdAt,
+          read: recent.read,
+        });
+      }
+      return recent;
+    }
+
+    return await createNotification({
+      recipient: recipientId,
+      sender: senderId,
+      type: 'message_received',
+      title,
+      message,
+      data: {},
+      actionUrl: '/messages',
+    });
+  } catch (error) {
+    // Non-fatal: a failed notification must never block message delivery.
+    console.error('Error creating message notification:', error);
+    return null;
+  }
+};
+
 module.exports = {
   createNotification,
   getUserNotifications,
@@ -259,5 +347,6 @@ module.exports = {
   deleteNotification,
   createJobApplicationNotification,
   createJobPostedNotification,
-  createFollowNotification
+  createFollowNotification,
+  createMessageNotification,
 };

@@ -19,11 +19,18 @@ const applyForJob = async (req, res) => {
     const studentId = req.user.id;
     const { coverLetter } = req.body;
 
-    // Validate cover letter
+    // Validate cover letter length up front so we can return a clean 400
+    // instead of relying on the downstream Mongoose validator error.
     if (!coverLetter || coverLetter.trim().length < 50) {
       return res.status(400).json({
         success: false,
         message: 'Cover letter is required and must be at least 50 characters long'
+      });
+    }
+    if (coverLetter.trim().length > 5000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cover letter cannot exceed 5000 characters'
       });
     }
 
@@ -111,6 +118,21 @@ const applyForJob = async (req, res) => {
 
   } catch (error) {
     console.error('Apply for job error:', error);
+    // Surface Mongoose validation errors as 400 with a meaningful message.
+    if (error?.name === 'ValidationError') {
+      const firstField = Object.keys(error.errors || {})[0];
+      return res.status(400).json({
+        success: false,
+        message: error.errors?.[firstField]?.message || 'Invalid application data'
+      });
+    }
+    // Duplicate-key (unique index on job+student) — already applied.
+    if (error?.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already applied for this job'
+      });
+    }
     res.status(500).json({
       success: false,
       message: 'Server error while submitting application'

@@ -1,4 +1,6 @@
-/* Hamburger Menu Styles */
+/* ── Navbar Clean Styles ── */
+
+/* Hamburger Menu */
 .hamburger-menu {
   display: flex;
   flex-direction: column;
@@ -8,81 +10,70 @@
 }
 
 .hamburger-line {
-  background-color: #374151; /* gray-700 */
-  width: 32px;
-  height: 3px;
+  background-color: #374151;
+  width: 24px;
+  height: 2px;
   margin: 3px 0;
   transition: all 0.3s ease-in-out;
-  border-radius: 2px;
+  border-radius: 1px;
 }
 
-/* Hamburger Animation - Top Line */
 .hamburger-line.top.active {
-  transform: rotate(-45deg) translate(-6px, 6px);
+  transform: rotate(-45deg) translate(-5px, 5px);
 }
 
-/* Hamburger Animation - Middle Line */
 .hamburger-line.middle.active {
   opacity: 0;
   transform: scale(0);
 }
 
-/* Hamburger Animation - Bottom Line */
 .hamburger-line.bottom.active {
-  transform: rotate(45deg) translate(-6px, -6px);
+  transform: rotate(45deg) translate(-5px, -5px);
+}
+
+.hamburger-menu:hover .hamburger-line {
+  background-color: #111827;
 }
 
 /* Mobile Menu Links */
 .mobile-menu-link {
   display: block;
   width: 100%;
-  padding: 16px 24px;
-  color: white;
-  font-weight: 600;
-  font-size: 18px;
+  padding: 14px 24px;
+  color: #374151;
+  font-weight: 500;
+  font-size: 15px;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   border: none;
   background: none;
-  text-align: center;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .mobile-menu-link:hover {
-  background-color: white;
-  color: #1e40af; /* blue-800 */
-  transform: translateY(-1px);
+  background-color: #f9fafb;
+  color: #111827;
 }
 
-/* First menu item margin */
 .mobile-menu-link:first-child {
-  margin-top: 20px;
+  margin-top: 0;
 }
 
-/* Last menu item margin */
 .mobile-menu-link:last-child {
-  margin-bottom: 20px;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 /* Mobile Dropdown Animation */
 .mobile-dropdown-menu {
-  transition: max-height 0.4s ease-in-out;
+  transition: max-height 0.35s ease-in-out;
 }
 
-/* Smooth height transition for better animation */
 .mobile-dropdown-menu.open {
-  max-height: 600px; /* Adjust based on content */
+  max-height: 600px;
 }
 
 .mobile-dropdown-menu.closed {
   max-height: 0;
-}
-
-/* Hover effect for hamburger */
-.hamburger-menu:hover .hamburger-line {
-  background-color: #2563eb; /* blue-600 */
-}
-
-/* Active state for hamburger when menu is open */
-.hamburger-menu:has(input:checked) .hamburger-line {
-  background-color: #2563eb; /* blue-600 */
 }

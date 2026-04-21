@@ -6,7 +6,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "check-models": "node check-models.js"
+    "check-models": "node check-models.js",
+    "seed": "node scripts/seed.js",
+    "seed:reset": "node scripts/seed.js --reset"
   },
   "keywords": [],
   "author": "",

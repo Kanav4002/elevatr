@@ -206,20 +206,20 @@ const ProjectDetail = () => {
             {/* Action Buttons */}
             <div className="flex gap-3">
               <button
-                onClick={handleBookmark}
-                className={`flex items-center px-4 py-2 rounded-lg border transition duration-200 ${
-                  isBookmarked 
-                    ? 'bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100' 
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
+                // onClick={handleBookmark}
+                // className={`flex items-center px-4 py-2 rounded-lg border transition duration-200 ${
+                //   isBookmarked 
+                //     ? 'bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100' 
+                //     : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                // }`}
               >
-                <svg className="w-4 h-4 mr-2" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                {/* <svg className="w-4 h-4 mr-2" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                </svg> */}
+                {/* {isBookmarked ? 'Bookmarked' : 'Bookmark'} */}
               </button>
               
-              <button
+              {/* <button
                 onClick={handleShare}
                 className="flex items-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition duration-200"
               >
@@ -227,7 +227,7 @@ const ProjectDetail = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                 </svg>
                 Share
-              </button>
+              </button> */}
             </div>
           </div>
 

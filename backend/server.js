@@ -17,6 +17,7 @@ const aiRoutes = require('./routes/ai.route');
 const profileRoutes = require('./routes/profile.route');
 const usersRoutes = require('./routes/users.route');
 const notificationRoutes = require('./routes/notification.route');
+const messageRoutes = require('./routes/message.route');
 
 // Socket.io setup
 const io = new Server(server, {
@@ -37,15 +38,40 @@ io.on('connection', (socket) => {
 
   // Handle user joining with their ID
   socket.on('join', (userId) => {
+    if (!userId) return;
     connectedUsers.set(userId, socket.id);
     socket.userId = userId;
+    // Rooms let us reliably reach a user even when they have multiple
+    // simultaneous socket connections (e.g. notifications + messages tabs).
+    socket.join(`user:${userId}`);
     console.log(`👤 User ${userId} joined with socket ${socket.id}`);
+  });
+
+  // --- Messaging: typing indicators (broadcast only, no persistence) ---
+  socket.on('typing:start', ({ conversationId, toUserId }) => {
+    if (!socket.userId || !toUserId || !conversationId) return;
+    io.to(`user:${toUserId}`).emit('typing:start', {
+      conversationId,
+      fromUserId: socket.userId,
+    });
+  });
+
+  socket.on('typing:stop', ({ conversationId, toUserId }) => {
+    if (!socket.userId || !toUserId || !conversationId) return;
+    io.to(`user:${toUserId}`).emit('typing:stop', {
+      conversationId,
+      fromUserId: socket.userId,
+    });
   });
 
   // Handle disconnection
   socket.on('disconnect', () => {
     if (socket.userId) {
-      connectedUsers.delete(socket.userId);
+      // Only clear the map entry if it still points to this socket — another
+      // tab for the same user may have overwritten it with a newer socket id.
+      if (connectedUsers.get(socket.userId) === socket.id) {
+        connectedUsers.delete(socket.userId);
+      }
       console.log(`👋 User ${socket.userId} disconnected`);
     }
   });
@@ -86,6 +112,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World');
