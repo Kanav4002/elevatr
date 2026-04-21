@@ -19,13 +19,19 @@ const usersRoutes = require('./routes/users.route');
 const notificationRoutes = require('./routes/notification.route');
 const messageRoutes = require('./routes/message.route');
 
+// Accept a comma-separated list of origins so Vercel preview deploys (which
+// each get a unique URL) can be whitelisted alongside the production domain.
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: [
-      process.env.CLIENT_URL || 'http://localhost:5173'
-    ],
-    methods: ["GET", "POST"]
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -81,12 +87,14 @@ io.on('connection', (socket) => {
 global.io = io;
 global.connectedUsers = connectedUsers;
 
+// Render (and most PaaS hosts) terminate TLS at a proxy; trust it so
+// `secure: true` cookies are actually sent back to the browser.
+app.set('trust proxy', 1);
+
 // middleware
 app.use(
   cors({
-    origin: [
-      process.env.CLIENT_URL || 'http://localhost:5173'
-    ],
+    origin: allowedOrigins,
     credentials: true
   })
 );
